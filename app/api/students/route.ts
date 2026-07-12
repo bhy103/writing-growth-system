@@ -87,7 +87,7 @@ export async function POST(request: Request) {
         gender: gender || null,
         gradeLevel: gradeLevel || null,
         schoolName: schoolName || null,
-        nativeLanguage: "zh-CN",
+        nativeLanguage: "en",
       },
       select: {
         id: true,

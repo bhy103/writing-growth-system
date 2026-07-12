@@ -33,7 +33,7 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
     {
       key: "ideas",
       name: "Ideas",
-      zhName: "内容想法",
+      zhName: "Ideas",
       level: wordCount >= 55 || hasFeeling ? "Strong" : "Developing",
       score: wordCount >= 55 || hasFeeling ? 4 : 3,
       note:
@@ -44,7 +44,7 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
     {
       key: "organization",
       name: "Organization",
-      zhName: "结构组织",
+      zhName: "Organization",
       level: hasTransition ? "Strong" : "Developing",
       score: hasTransition ? 4 : 3,
       note: hasTransition
@@ -54,7 +54,7 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
     {
       key: "vocabulary",
       name: "Vocabulary",
-      zhName: "词汇选择",
+      zhName: "Vocabulary",
       level: hasSpecificNoun ? "Developing" : "Practice",
       score: hasSpecificNoun ? 3 : 2,
       note: hasSpecificNoun
@@ -64,7 +64,7 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
     {
       key: "grammar",
       name: "Grammar",
-      zhName: "语法准确性",
+      zhName: "Grammar",
       level: sentenceCount >= 3 ? "Developing" : "Practice",
       score: sentenceCount >= 3 ? 3 : 2,
       note: "Most meaning is understandable. Check verb tense and make sure each sentence is complete.",
@@ -72,7 +72,7 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
     {
       key: "sentence_fluency",
       name: "Sentence Fluency",
-      zhName: "句子流畅度",
+      zhName: "Sentence Fluency",
       level: hasBecause ? "Developing" : "Focus",
       score: hasBecause ? 3 : 2,
       note: hasBecause
@@ -82,7 +82,7 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
     {
       key: "mechanics",
       name: "Mechanics",
-      zhName: "书写规范",
+      zhName: "Mechanics",
       level: hasMechanicsIssue ? "Practice" : "Developing",
       score: hasMechanicsIssue ? 2 : 3,
       note: hasMechanicsIssue
@@ -109,9 +109,9 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
 
 export function createParentSummary(report: MockReport) {
   return {
-    main: `孩子这篇英文作文在 ${report.strongest.name}（${report.strongest.zhName}）方面表现相对更好。下一步建议重点练习 ${report.weakest.name}（${report.weakest.zhName}）。`,
+    main: `This writing is strongest in ${report.strongest.name}. The next best practice focus is ${report.weakest.name}.`,
     support:
-      "家长可以先用中文理解方向，但陪伴时尽量让孩子用英文说和写。请不要直接替孩子重写整篇作文。",
+      "Support the student by asking them to explain their idea in English, then revise one small part in their own words. Please do not rewrite the full essay for them.",
   };
 }
 

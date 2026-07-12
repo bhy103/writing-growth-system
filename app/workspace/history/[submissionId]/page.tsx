@@ -26,6 +26,10 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
+function isEnglishOnlySummary(summary?: string | null) {
+  return Boolean(summary && !/[\u3400-\u9fff]/.test(summary));
+}
+
 export default async function WritingDetailPage({ params }: WritingDetailPageProps) {
   const { submissionId } = await params;
   const student = await requireCurrentStudentProfile();
@@ -114,9 +118,9 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
               </div>
             </div>
             <p className="detail-copy">{analysis.studentFeedback ?? "No student feedback saved yet."}</p>
-            {analysis.parentSummaryZh && (
+            {isEnglishOnlySummary(analysis.parentSummaryZh) && (
               <div className="parent-summary-note">
-                <strong>Parent summary</strong>
+                <strong>Family summary</strong>
                 <p>{analysis.parentSummaryZh}</p>
               </div>
             )}

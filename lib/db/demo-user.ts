@@ -14,14 +14,14 @@ export async function getDemoStudentProfile() {
       accountProfile: {
         create: {
           parentName: "Demo Parent",
-          languagePreference: "zh-CN",
+          languagePreference: "en",
         },
       },
       studentProfiles: {
         create: {
           displayName: "Demo Student",
           gradeLevel: "Grade 5",
-          nativeLanguage: "zh-CN",
+          nativeLanguage: "en",
         },
       },
     },
@@ -41,7 +41,7 @@ export async function getDemoStudentProfile() {
       userId: user.id,
       displayName: "Demo Student",
       gradeLevel: "Grade 5",
-      nativeLanguage: "zh-CN",
+      nativeLanguage: "en",
     },
   });
 }

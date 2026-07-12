@@ -126,7 +126,7 @@ export async function POST(request: Request) {
             gradeLevel: gradeLevel || null,
             gender: gender || null,
             schoolName: schoolName || null,
-            nativeLanguage: "zh-CN",
+            nativeLanguage: "en",
           },
           select: { id: true, displayName: true },
         });

@@ -20,8 +20,8 @@ export function LanguageSettings({ onResetPrototypeData }: LanguageSettingsProps
           <strong>English</strong>
         </div>
         <div className="settings-row">
-          <span>Parent summary</span>
-          <strong>Simplified Chinese</strong>
+          <span>Family summary</span>
+          <strong>English</strong>
         </div>
         <div className="settings-row">
           <span>Saved demo data</span>

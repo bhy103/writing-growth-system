@@ -34,12 +34,12 @@ const dimensionNames = [
 ] as const;
 
 const zhDimensionNames: Record<string, string> = {
-  Ideas: "内容想法",
-  Organization: "结构组织",
-  Vocabulary: "词汇选择",
-  Grammar: "语法准确性",
-  "Sentence Fluency": "句子流畅度",
-  Mechanics: "书写规范",
+  Ideas: "Ideas",
+  Organization: "Organization",
+  Vocabulary: "Vocabulary",
+  Grammar: "Grammar",
+  "Sentence Fluency": "Sentence Fluency",
+  Mechanics: "Mechanics",
 };
 
 const analysisSchema = {
@@ -65,7 +65,7 @@ const analysisSchema = {
     },
     parentSummaryZh: {
       type: "string",
-      description: "A concise Simplified Chinese parent summary. Do not rewrite the essay.",
+      description: "A concise English family summary. Do not rewrite the essay.",
     },
   },
   $defs: {
@@ -213,7 +213,7 @@ function buildPrompt({ title, draft, gradeLevel }: { title: string; draft: strin
     "Do not rewrite the full essay. Do not provide a polished replacement essay.",
     "Give specific feedback that helps the student revise with their own words.",
     "Student-facing feedback must be in English.",
-    "The parent summary must be in Simplified Chinese.",
+    "The family summary must be in English.",
     "Use these six rubric dimensions exactly: Ideas, Organization, Vocabulary, Grammar, Sentence Fluency, Mechanics.",
     `Student grade level: ${gradeLevel ?? "Not provided"}.`,
     `Title: ${title}`,

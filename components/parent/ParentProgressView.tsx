@@ -15,8 +15,8 @@ export function ParentProgressView({ report, parentSummary }: ParentProgressView
     <section className="view active-view" data-testid="view-parent">
       <div className="parent-layout">
         <section className="panel parent-summary">
-          <p className="eyebrow">Parent summary · 中文</p>
-          <h3>英文写作进展摘要</h3>
+          <p className="eyebrow">Family summary</p>
+          <h3>English Writing Progress Summary</h3>
           <p>{parentSummary.main}</p>
           <p>{parentSummary.support}</p>
         </section>
@@ -25,9 +25,7 @@ export function ParentProgressView({ report, parentSummary }: ParentProgressView
           <div className="focus-list" data-testid="parent-focus-list">
             {report.dimensions.map((dimension) => (
               <div key={dimension.key}>
-                <span>
-                  {dimension.name} · {dimension.zhName}
-                </span>
+                <span>{dimension.name}</span>
                 <strong>{dimension.key === report.weakest.key ? "Practice next" : dimension.level}</strong>
               </div>
             ))}
