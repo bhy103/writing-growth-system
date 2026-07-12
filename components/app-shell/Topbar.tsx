@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { StudentSwitcher } from "@/components/app-shell/StudentSwitcher";
 import { pageTitles, type View } from "@/lib/workflow/writing-flow";
 
 type TopbarProps = {
@@ -35,11 +35,9 @@ export function Topbar({ activeView }: TopbarProps) {
         <h1>{pageTitles[activeView]}</h1>
       </div>
       <div className="topbar-actions">
+        {activeView !== "settings" && <StudentSwitcher placement="topbar" />}
         {email && <span className="user-chip">{email}</span>}
         <button className="icon-button">EN</button>
-        <Link className="primary-button" href="/workspace/new-writing">
-          New Writing
-        </Link>
         <button className="secondary-button" onClick={logout} type="button">
           Logout
         </button>
