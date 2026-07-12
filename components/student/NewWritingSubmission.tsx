@@ -1,27 +1,32 @@
 import { type ChangeEvent } from "react";
 import Link from "next/link";
-import { type DraftSaveStatus } from "@/hooks/useWritingPrototypeState";
+import { type AnalysisStatus, type DraftSaveStatus } from "@/hooks/useWritingPrototypeState";
 
 type NewWritingSubmissionProps = {
   title: string;
   draft: string;
   saveStatus: DraftSaveStatus;
+  analysisStatus: AnalysisStatus;
   saveMessage: string;
   onTitleChange: (value: string) => void;
   onDraftChange: (value: string) => void;
   onSaveDraft: () => void;
+  onAnalyzeWriting: () => void;
 };
 
 export function NewWritingSubmission({
   title,
   draft,
   saveStatus,
+  analysisStatus,
   saveMessage,
   onTitleChange,
   onDraftChange,
   onSaveDraft,
+  onAnalyzeWriting,
 }: NewWritingSubmissionProps) {
   const isSaving = saveStatus === "saving";
+  const isAnalyzing = analysisStatus === "analyzing";
 
   return (
     <section className="view active-view" data-testid="view-new-writing">
@@ -80,9 +85,15 @@ export function NewWritingSubmission({
               <Link className="secondary-button" data-testid="simulate-analysis-failure" href="/workspace/report">
                 Preview Report
               </Link>
-              <Link className="primary-button" data-testid="analyze-writing" href="/workspace/report">
-                Analyze Writing
-              </Link>
+              <button
+                className="primary-button"
+                data-testid="analyze-writing"
+                disabled={isAnalyzing}
+                onClick={onAnalyzeWriting}
+                type="button"
+              >
+                {isAnalyzing ? "Analyzing..." : "Analyze Writing"}
+              </button>
             </div>
             {saveMessage && (
               <p className={`form-message ${saveStatus === "error" ? "error" : "success"}`}>

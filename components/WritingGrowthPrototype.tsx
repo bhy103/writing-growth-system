@@ -32,7 +32,9 @@ export function WritingGrowthPrototype({ initialView = "dashboard" }: WritingGro
           onTitleChange={prototype.setTitle}
           onDraftChange={prototype.setDraft}
           onSaveDraft={prototype.saveDraft}
+          onAnalyzeWriting={prototype.openReport}
           saveStatus={prototype.draftSaveStatus}
+          analysisStatus={prototype.analysisStatus}
           saveMessage={prototype.draftSaveMessage}
         />
       )}

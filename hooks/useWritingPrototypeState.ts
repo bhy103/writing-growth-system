@@ -108,11 +108,34 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     setSnapshot((currentSnapshot) => ({ ...currentSnapshot, draft }));
   }
 
-  function openReport() {
-    setReport(createMockReport({ title: snapshot.title, draft: snapshot.draft }));
+  async function openReport() {
     setView("report");
-    setAnalysisStatus("ready");
+    setAnalysisStatus("analyzing");
     router.push(viewRoutes.report);
+
+    try {
+      const response = await fetch("/api/analysis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: snapshot.title,
+          content: snapshot.draft,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Analysis could not finish.");
+      }
+
+      setReport(result.report);
+      setAnalysisStatus("ready");
+    } catch {
+      setAnalysisStatus("error");
+    }
   }
 
   function simulateFailure() {
