@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getDemoStudentProfile } from "@/lib/db/demo-user";
-import { prisma } from "@/lib/db/prisma";
+import { getPrisma } from "@/lib/db/prisma";
 
 export async function GET() {
   const student = await getDemoStudentProfile();
+  const prisma = getPrisma();
   const submissions = await prisma.writingSubmission.findMany({
     where: {
       studentId: student.id,
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
   }
 
   const student = await getDemoStudentProfile();
+  const prisma = getPrisma();
   const submission = await prisma.writingSubmission.create({
     data: {
       studentId: student.id,

@@ -1,8 +1,10 @@
-import { prisma } from "@/lib/db/prisma";
+import { getPrisma } from "@/lib/db/prisma";
 
 export const demoStudentEmail = "demo-student@writinggrowth.local";
 
 export async function getDemoStudentProfile() {
+  const prisma = getPrisma();
+
   const user = await prisma.user.upsert({
     where: { email: demoStudentEmail },
     update: {},

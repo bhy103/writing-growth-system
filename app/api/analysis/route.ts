@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDemoStudentProfile } from "@/lib/db/demo-user";
-import { prisma } from "@/lib/db/prisma";
+import { getPrisma } from "@/lib/db/prisma";
 import { createMockReport } from "@/lib/mock/mock-analysis";
 
 export async function POST(request: Request) {
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
   }
 
   const student = await getDemoStudentProfile();
+  const prisma = getPrisma();
   const report = createMockReport({ title, draft: content });
 
   const submission = await prisma.writingSubmission.create({

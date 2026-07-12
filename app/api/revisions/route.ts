@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDemoStudentProfile } from "@/lib/db/demo-user";
-import { prisma } from "@/lib/db/prisma";
+import { getPrisma } from "@/lib/db/prisma";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -18,6 +18,7 @@ export async function POST(request: Request) {
   }
 
   const student = await getDemoStudentProfile();
+  const prisma = getPrisma();
   const submission = submissionId
     ? await prisma.writingSubmission.update({
         where: { id: submissionId },
