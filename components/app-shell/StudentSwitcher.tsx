@@ -9,15 +9,29 @@ type StudentOption = {
 };
 
 type StudentSwitcherProps = {
+  currentStudentId?: string;
+  fallbackStudentName?: string;
+  initialStudents?: StudentOption[];
   placement?: "topbar" | "sidebar";
 };
 
-export function StudentSwitcher({ placement = "topbar" }: StudentSwitcherProps) {
+export function StudentSwitcher({
+  currentStudentId: providedCurrentStudentId = "",
+  fallbackStudentName = "",
+  initialStudents = [],
+  placement = "topbar",
+}: StudentSwitcherProps) {
   const router = useRouter();
-  const [students, setStudents] = useState<StudentOption[]>([]);
-  const [currentStudentId, setCurrentStudentId] = useState("");
+  const [loadedStudents, setLoadedStudents] = useState<StudentOption[]>([]);
+  const [loadedCurrentStudentId, setLoadedCurrentStudentId] = useState("");
+  const students = initialStudents.length > 0 ? initialStudents : loadedStudents;
+  const currentStudentId = loadedCurrentStudentId || providedCurrentStudentId;
 
   useEffect(() => {
+    if (initialStudents.length > 0 || fallbackStudentName) {
+      return;
+    }
+
     let cancelled = false;
 
     async function loadStudents() {
@@ -29,8 +43,8 @@ export function StudentSwitcher({ placement = "topbar" }: StudentSwitcherProps) 
       }
 
       if (Array.isArray(result?.students) && result.students.length > 0) {
-        setStudents(result.students);
-        setCurrentStudentId(result.currentStudentId ?? result.students[0]?.id ?? "");
+        setLoadedStudents(result.students);
+        setLoadedCurrentStudentId(result.currentStudentId ?? result.students[0]?.id ?? "");
         return;
       }
 
@@ -39,8 +53,8 @@ export function StudentSwitcher({ placement = "topbar" }: StudentSwitcherProps) 
       const fallbackName = fallbackResult.user?.displayName;
 
       if (!cancelled && fallbackName && fallbackName !== fallbackResult.user?.email) {
-        setStudents([{ id: "fallback-student", displayName: fallbackName }]);
-        setCurrentStudentId("fallback-student");
+        setLoadedStudents([{ id: "fallback-student", displayName: fallbackName }]);
+        setLoadedCurrentStudentId("fallback-student");
       }
     }
 
@@ -49,14 +63,14 @@ export function StudentSwitcher({ placement = "topbar" }: StudentSwitcherProps) 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fallbackStudentName, initialStudents.length]);
 
   async function switchStudent(studentId: string) {
     if (studentId === "fallback-student") {
       return;
     }
 
-    setCurrentStudentId(studentId);
+    setLoadedCurrentStudentId(studentId);
     await fetch("/api/students/current", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -67,7 +81,12 @@ export function StudentSwitcher({ placement = "topbar" }: StudentSwitcherProps) 
   }
 
   if (students.length === 0) {
-    return null;
+    return fallbackStudentName ? (
+      <section className={`student-switcher ${placement}`} aria-label="Current student">
+        {placement === "sidebar" && <span>Current student</span>}
+        <strong>{fallbackStudentName}</strong>
+      </section>
+    ) : null;
   }
 
   const currentStudent = students.find((student) => student.id === currentStudentId) ?? students[0];

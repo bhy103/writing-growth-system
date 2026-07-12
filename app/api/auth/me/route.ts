@@ -18,6 +18,10 @@ export async function GET() {
       email: user.email,
       displayName: currentStudent?.displayName ?? user.email,
       currentStudentId,
+      students: user.studentProfiles.map((student) => ({
+        id: student.id,
+        displayName: student.displayName,
+      })),
       profileComplete: Boolean(user.accountProfile && user.studentProfiles.length > 0),
       role: user.role,
     },

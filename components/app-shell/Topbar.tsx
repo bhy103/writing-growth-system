@@ -9,18 +9,40 @@ type TopbarProps = {
   activeView: View;
 };
 
+type StudentOption = {
+  id: string;
+  displayName: string;
+};
+
 export function Topbar({ activeView }: TopbarProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [students, setStudents] = useState<StudentOption[]>([]);
+  const [currentStudentId, setCurrentStudentId] = useState("");
+  const [fallbackStudentName, setFallbackStudentName] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadUser() {
       const response = await fetch("/api/auth/me");
       const result = await response.json();
+
+      if (cancelled) {
+        return;
+      }
+
       setEmail(result.user?.email ?? "");
+      setStudents(Array.isArray(result.user?.students) ? result.user.students : []);
+      setCurrentStudentId(result.user?.currentStudentId ?? "");
+      setFallbackStudentName(result.user?.displayName && result.user.displayName !== result.user.email ? result.user.displayName : "");
     }
 
-    loadUser();
+    void loadUser();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function logout() {
@@ -35,7 +57,14 @@ export function Topbar({ activeView }: TopbarProps) {
         <h1>{pageTitles[activeView]}</h1>
       </div>
       <div className="topbar-actions">
-        {activeView !== "settings" && <StudentSwitcher placement="topbar" />}
+        {activeView !== "settings" && (
+          <StudentSwitcher
+            currentStudentId={currentStudentId}
+            fallbackStudentName={fallbackStudentName}
+            initialStudents={students}
+            placement="topbar"
+          />
+        )}
         {email && <span className="user-chip">{email}</span>}
         <button className="icon-button">EN</button>
         <button className="secondary-button" onClick={logout} type="button">
