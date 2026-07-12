@@ -12,6 +12,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const passwordIssues = getPasswordIssues(password);
@@ -78,21 +79,36 @@ export function RegisterPage() {
               type={showPassword ? "text" : "password"}
               value={password}
             />
-            <button className="secondary-button" onClick={() => setShowPassword((current) => !current)} type="button">
-              {showPassword ? "Hide" : "Show"}
+            <button
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="password-visibility-button"
+              onClick={() => setShowPassword((current) => !current)}
+              type="button"
+            >
+              <EyeIcon hidden={showPassword} />
             </button>
           </div>
 
           <label htmlFor="confirm-password">Confirm password</label>
-          <input
-            id="confirm-password"
-            minLength={8}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Enter password again"
-            required
-            type={showPassword ? "text" : "password"}
-            value={confirmPassword}
-          />
+          <div className="password-field">
+            <input
+              id="confirm-password"
+              minLength={8}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="Enter password again"
+              required
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+            />
+            <button
+              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+              className="password-visibility-button"
+              onClick={() => setShowConfirmPassword((current) => !current)}
+              type="button"
+            >
+              <EyeIcon hidden={showConfirmPassword} />
+            </button>
+          </div>
 
           <div className={`password-strength ${password && passwordIssues.length === 0 ? "strong" : ""}`}>
             <strong>{passwordIssues.length === 0 && password ? "Strong password" : "Password must include:"}</strong>
@@ -113,5 +129,27 @@ export function RegisterPage() {
         </p>
       </section>
     </main>
+  );
+}
+
+function EyeIcon({ hidden }: { hidden: boolean }) {
+  return (
+    <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
+      <path
+        d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      {hidden && <path d="M4 4l16 16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />}
+    </svg>
   );
 }
