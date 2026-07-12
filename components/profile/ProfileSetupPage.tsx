@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 
 const australianStates = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
 const gradeOptions = [
@@ -21,6 +21,97 @@ const gradeOptions = [
   "Year 12",
 ];
 const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
+
+function toNativeDateValue(value: string) {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (!match) {
+    return "";
+  }
+
+  const [, day, month, year] = match;
+  const parsed = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getUTCDate() !== Number(day) ||
+    parsed.getUTCMonth() + 1 !== Number(month) ||
+    parsed.getUTCFullYear() !== Number(year)
+  ) {
+    return "";
+  }
+
+  return `${year}-${month}-${day}`;
+}
+
+function fromNativeDateValue(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+function DatePickerField({
+  id,
+  onChange,
+  value,
+}: {
+  id: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  const nativeInputRef = useRef<HTMLInputElement>(null);
+
+  function openCalendar() {
+    const nativeInput = nativeInputRef.current;
+
+    if (!nativeInput) {
+      return;
+    }
+
+    if (typeof nativeInput.showPicker === "function") {
+      nativeInput.showPicker();
+      return;
+    }
+
+    nativeInput.click();
+  }
+
+  return (
+    <div className="date-picker-field">
+      <input
+        id={id}
+        inputMode="numeric"
+        onChange={(event) => onChange(event.target.value)}
+        pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"
+        placeholder="DD/MM/YYYY"
+        value={value}
+      />
+      <button aria-label="Open calendar" className="date-picker-button" onClick={openCalendar} type="button">
+        <svg aria-hidden="true" fill="none" height="22" viewBox="0 0 24 24" width="22">
+          <path
+            d="M7 3v3M17 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+          />
+        </svg>
+      </button>
+      <input
+        aria-hidden="true"
+        className="native-date-input"
+        onChange={(event) => onChange(fromNativeDateValue(event.target.value))}
+        ref={nativeInputRef}
+        tabIndex={-1}
+        type="date"
+        value={toNativeDateValue(value)}
+      />
+    </div>
+  );
+}
 
 export function ProfileSetupPage() {
   const router = useRouter();
@@ -85,14 +176,7 @@ export function ProfileSetupPage() {
           <input id="parent-name" onChange={(event) => setParentName(event.target.value)} required value={parentName} />
 
           <label htmlFor="parent-birthday">Parent birthday</label>
-          <input
-            id="parent-birthday"
-            onChange={(event) => setParentBirthday(event.target.value)}
-            inputMode="numeric"
-            pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"
-            placeholder="DD/MM/YYYY"
-            value={parentBirthday}
-          />
+          <DatePickerField id="parent-birthday" onChange={setParentBirthday} value={parentBirthday} />
 
           <h3>Australian address</h3>
           <label htmlFor="street-address">Street address</label>
@@ -131,14 +215,7 @@ export function ProfileSetupPage() {
           <input id="student-name" onChange={(event) => setStudentName(event.target.value)} required value={studentName} />
 
           <label htmlFor="student-birthday">Student birthday</label>
-          <input
-            id="student-birthday"
-            onChange={(event) => setStudentBirthday(event.target.value)}
-            inputMode="numeric"
-            pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"
-            placeholder="DD/MM/YYYY"
-            value={studentBirthday}
-          />
+          <DatePickerField id="student-birthday" onChange={setStudentBirthday} value={studentBirthday} />
 
           <div className="form-grid two-columns">
             <div>
