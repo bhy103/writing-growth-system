@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:3005": "next dev -p 3005",
-    "build": "next build && node scripts/prepare-dist.mjs",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
