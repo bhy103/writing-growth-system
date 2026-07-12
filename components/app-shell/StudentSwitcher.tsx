@@ -18,14 +18,26 @@ export function StudentSwitcher() {
 
     async function loadStudents() {
       const response = await fetch("/api/students");
-      const result = await response.json();
+      const result = response.ok ? await response.json() : null;
 
       if (cancelled) {
         return;
       }
 
-      setStudents(Array.isArray(result.students) ? result.students : []);
-      setCurrentStudentId(result.currentStudentId ?? "");
+      if (Array.isArray(result?.students) && result.students.length > 0) {
+        setStudents(result.students);
+        setCurrentStudentId(result.currentStudentId ?? result.students[0]?.id ?? "");
+        return;
+      }
+
+      const fallbackResponse = await fetch("/api/auth/me");
+      const fallbackResult = await fallbackResponse.json();
+      const fallbackName = fallbackResult.user?.displayName;
+
+      if (!cancelled && fallbackName && fallbackName !== fallbackResult.user?.email) {
+        setStudents([{ id: "fallback-student", displayName: fallbackName }]);
+        setCurrentStudentId("fallback-student");
+      }
     }
 
     void loadStudents();
@@ -36,6 +48,10 @@ export function StudentSwitcher() {
   }, []);
 
   async function switchStudent(studentId: string) {
+    if (studentId === "fallback-student") {
+      return;
+    }
+
     setCurrentStudentId(studentId);
     await fetch("/api/students/current", {
       method: "POST",

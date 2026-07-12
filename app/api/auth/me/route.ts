@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getCurrentStudentId, getCurrentUser } from "@/lib/auth/session";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -8,11 +8,16 @@ export async function GET() {
     return NextResponse.json({ user: null });
   }
 
+  const currentStudentId = await getCurrentStudentId();
+  const currentStudent =
+    user.studentProfiles.find((student) => student.id === currentStudentId) ?? user.studentProfiles[0];
+
   return NextResponse.json({
     user: {
       id: user.id,
       email: user.email,
-      displayName: user.studentProfiles[0]?.displayName ?? user.email,
+      displayName: currentStudent?.displayName ?? user.email,
+      currentStudentId,
       profileComplete: Boolean(user.accountProfile && user.studentProfiles.length > 0),
       role: user.role,
     },
