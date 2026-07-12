@@ -662,36 +662,6 @@ a {
   font-size: 13px;
 }
 
-.sidebar-student-switcher {
-  display: grid;
-  gap: 8px;
-}
-
-.sidebar-student-switcher span {
-  color: #b8c6bd;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.sidebar-student-switcher select {
-  width: 100%;
-  min-height: 46px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  background: #24342d;
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 800;
-  padding: 0 12px;
-}
-
-.sidebar-student-switcher select:focus-visible {
-  outline: 2px solid #dce9d5;
-  outline-offset: 2px;
-}
-
 .nav {
   display: grid;
   gap: 8px;
@@ -778,6 +748,31 @@ a {
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.student-name-chip,
+.topbar-student-switcher select {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.student-name-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 180px;
+  overflow: hidden;
+  padding: 0 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-student-switcher select {
+  max-width: 180px;
+  padding: 0 12px;
 }
 
 .primary-button,

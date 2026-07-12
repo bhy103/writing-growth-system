@@ -50,9 +50,14 @@ export function StudentSwitcher() {
     return null;
   }
 
+  const currentStudent = students.find((student) => student.id === currentStudentId) ?? students[0];
+
+  if (students.length === 1) {
+    return <span className="student-name-chip">{currentStudent.displayName}</span>;
+  }
+
   return (
-    <section className="sidebar-student-switcher" aria-label="Current student">
-      <span>Current student</span>
+    <section className="topbar-student-switcher" aria-label="Current student">
       <select onChange={(event) => switchStudent(event.target.value)} value={currentStudentId}>
         {students.map((student) => (
           <option key={student.id} value={student.id}>

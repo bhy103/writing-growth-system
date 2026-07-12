@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { StudentSwitcher } from "@/components/app-shell/StudentSwitcher";
 import { navItems, type View } from "@/lib/workflow/writing-flow";
 
 type SidebarProps = {
@@ -16,7 +15,6 @@ export function Sidebar({ activeView }: SidebarProps) {
           <span>English writing coach</span>
         </div>
       </div>
-      <StudentSwitcher />
       <nav className="nav" aria-label="Main navigation">
         {navItems.map((item) => (
           <Link
