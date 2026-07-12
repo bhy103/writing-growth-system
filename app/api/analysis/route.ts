@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import { analyzeWritingWithAi } from "@/lib/ai/writing-analysis";
 import { apiErrorResponse } from "@/lib/api/error-response";
 import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
-import { createMockReport } from "@/lib/mock/mock-analysis";
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +21,12 @@ export async function POST(request: Request) {
 
     const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
-    const report = createMockReport({ title, draft: content });
+    const analysis = await analyzeWritingWithAi({
+      title,
+      draft: content,
+      gradeLevel: student.gradeLevel,
+    });
+    const report = analysis.report;
     const analysisData = {
       overallLevel: report.overall,
       focusDimension: report.focus,
@@ -29,7 +34,7 @@ export async function POST(request: Request) {
       weakestDimension: report.weakest.name,
       rubricJson: report.dimensions,
       studentFeedback: report.weakest.note,
-      parentSummaryZh: null,
+      parentSummaryZh: analysis.parentSummaryZh,
     };
 
     const ownedSubmission = submissionId
@@ -87,6 +92,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       submissionId: submission.id,
       report,
+      provider: analysis.provider,
     });
   } catch (error) {
     return apiErrorResponse(error);
