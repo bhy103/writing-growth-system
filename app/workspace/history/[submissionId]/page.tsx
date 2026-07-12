@@ -61,6 +61,7 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
 
   const analysis = submission.analysis;
   const sourceUpload = submission.uploads[0];
+  const hasStoredSourceFile = sourceUpload && !sourceUpload.storagePath.startsWith("pending-storage/");
 
   return (
     <AppShell activeView="history">
@@ -122,6 +123,16 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
                   <dt>File details</dt>
                   <dd>
                     {sourceUpload.fileType} {sourceUpload.fileSize ? `- ${formatFileSize(sourceUpload.fileSize)}` : ""}
+                  </dd>
+                </div>
+              )}
+              {hasStoredSourceFile && (
+                <div>
+                  <dt>Original file</dt>
+                  <dd>
+                    <Link className="inline-link" href={`/api/uploads/${sourceUpload.id}/download`} target="_blank">
+                      Open source file
+                    </Link>
                   </dd>
                 </div>
               )}

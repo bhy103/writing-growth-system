@@ -1616,6 +1616,16 @@ blockquote {
   font-weight: 900;
 }
 
+.inline-link {
+  color: var(--green);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.inline-link:hover {
+  text-decoration: underline;
+}
+
 .report-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

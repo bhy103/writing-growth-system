@@ -74,3 +74,38 @@ export async function uploadFileToConfiguredStorage({
     stored: true,
   };
 }
+
+export async function createSignedUploadUrl(storagePath: string, expiresIn = 300) {
+  const config = getSupabaseStorageConfig();
+
+  if (!config) {
+    throw new Error("Object storage is not configured.");
+  }
+
+  const encodedPath = storagePath.split("/").map(encodeURIComponent).join("/");
+  const response = await fetch(
+    `${config.supabaseUrl}/storage/v1/object/sign/${config.bucket}/${encodedPath}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ expiresIn }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(errorText || "Unable to create a signed upload URL.");
+  }
+
+  const result = (await response.json()) as { signedURL?: string; signedUrl?: string };
+  const signedPath = result.signedURL ?? result.signedUrl;
+
+  if (!signedPath) {
+    throw new Error("Storage did not return a signed URL.");
+  }
+
+  return signedPath.startsWith("http") ? signedPath : `${config.supabaseUrl}${signedPath}`;
+}
