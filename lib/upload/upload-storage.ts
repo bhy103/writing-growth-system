@@ -15,8 +15,18 @@ function getSupabaseStorageConfig() {
   return {
     bucket,
     serviceRoleKey,
-    supabaseUrl: supabaseUrl.replace(/\/$/, ""),
+    supabaseUrl: normalizeSupabaseProjectUrl(supabaseUrl),
   };
+}
+
+function normalizeSupabaseProjectUrl(supabaseUrl: string) {
+  try {
+    const url = new URL(supabaseUrl);
+
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    return supabaseUrl.replace(/\/rest\/v1\/?$/, "").replace(/\/$/, "");
+  }
 }
 
 export function isObjectStorageConfigured() {
@@ -76,7 +86,7 @@ export async function uploadFileToConfiguredStorage({
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "");
-    throw new Error(errorText || "Unable to store the uploaded file.");
+    throw new Error(`Unable to store the uploaded file: ${errorText || response.status}`);
   }
 
   return {
@@ -107,7 +117,7 @@ export async function createSignedUploadUrl(storagePath: string, expiresIn = 300
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "");
-    throw new Error(errorText || "Unable to create a signed upload URL.");
+    throw new Error(`Unable to create a signed upload URL: ${errorText || response.status}`);
   }
 
   const result = (await response.json()) as { signedURL?: string; signedUrl?: string };
