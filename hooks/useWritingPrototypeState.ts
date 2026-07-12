@@ -77,7 +77,10 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   }, [snapshot]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || (initialView !== "new-writing" && initialView !== "revision")) {
+    if (
+      typeof window === "undefined" ||
+      (initialView !== "new-writing" && initialView !== "revision" && initialView !== "report")
+    ) {
       return;
     }
 
@@ -118,6 +121,11 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
 
       if (initialView === "revision" && typeof submission.latestRevision === "string") {
         setRevisionDraft(submission.latestRevision || "");
+      }
+
+      if (initialView === "report" && submission.report) {
+        setReport(submission.report);
+        setAnalysisStatus("ready");
       }
     }
 
@@ -209,6 +217,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
       setReport(result.report);
       setCurrentSubmissionId(result.submissionId);
       setAnalysisStatus("ready");
+      router.replace(`${viewRoutes.report}?submissionId=${result.submissionId}`);
     } catch {
       setAnalysisStatus("error");
     }
@@ -336,7 +345,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     setRevisionSaveStatus("idle");
     setRevisionSaveMessage("");
     setView("revision");
-    router.push(viewRoutes.revision);
+    router.push(currentSubmissionId ? `${viewRoutes.revision}?submissionId=${currentSubmissionId}` : viewRoutes.revision);
   }
 
   function chooseAnotherUpload() {

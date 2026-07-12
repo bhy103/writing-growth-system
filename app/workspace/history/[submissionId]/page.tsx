@@ -70,6 +70,11 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
             </div>
           </div>
           <div className="detail-actions">
+            {analysis && (
+              <Link className="secondary-button" href={`/workspace/report?submissionId=${submission.id}`}>
+                View full report
+              </Link>
+            )}
             <Link className="secondary-button" href={`/workspace/new-writing?submissionId=${submission.id}`}>
               {analysis ? "Analyze again" : "Analyze this writing"}
             </Link>
