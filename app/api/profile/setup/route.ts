@@ -8,7 +8,25 @@ function parseOptionalDate(value: unknown) {
     return null;
   }
 
-  return new Date(`${value}T00:00:00.000Z`);
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (!match) {
+    throw new Error("Dates must use DD/MM/YYYY format.");
+  }
+
+  const [, day, month, year] = match;
+  const parsed = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getUTCDate() !== Number(day) ||
+    parsed.getUTCMonth() + 1 !== Number(month) ||
+    parsed.getUTCFullYear() !== Number(year)
+  ) {
+    throw new Error("Please enter a valid date in DD/MM/YYYY format.");
+  }
+
+  return parsed;
 }
 
 export async function POST(request: Request) {
@@ -22,14 +40,22 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => null);
     const parentName = typeof body?.parentName === "string" ? body.parentName.trim() : "";
     const parentBirthday = parseOptionalDate(body?.parentBirthday);
-    const address = typeof body?.address === "string" ? body.address.trim() : "";
+    const streetAddress = typeof body?.streetAddress === "string" ? body.streetAddress.trim() : "";
+    const suburb = typeof body?.suburb === "string" ? body.suburb.trim() : "";
+    const state = typeof body?.state === "string" ? body.state.trim() : "";
+    const postcode = typeof body?.postcode === "string" ? body.postcode.trim() : "";
     const studentName = typeof body?.studentName === "string" ? body.studentName.trim() : "";
     const studentBirthday = parseOptionalDate(body?.studentBirthday);
     const gradeLevel = typeof body?.gradeLevel === "string" ? body.gradeLevel.trim() : "";
+    const gender = typeof body?.gender === "string" ? body.gender.trim() : "";
     const schoolName = typeof body?.schoolName === "string" ? body.schoolName.trim() : "";
 
     if (!parentName || !studentName) {
       return NextResponse.json({ message: "Please enter a parent name and student name." }, { status: 400 });
+    }
+
+    if (postcode && !/^\d{4}$/.test(postcode)) {
+      return NextResponse.json({ message: "Australian postcodes must be 4 digits." }, { status: 400 });
     }
 
     const prisma = getPrisma();
@@ -39,13 +65,21 @@ export async function POST(request: Request) {
       update: {
         parentName,
         parentBirthday,
-        address: address || null,
+        address: [streetAddress, suburb, state, postcode].filter(Boolean).join(", ") || null,
+        streetAddress: streetAddress || null,
+        suburb: suburb || null,
+        state: state || null,
+        postcode: postcode || null,
       },
       create: {
         userId: user.id,
         parentName,
         parentBirthday,
-        address: address || null,
+        address: [streetAddress, suburb, state, postcode].filter(Boolean).join(", ") || null,
+        streetAddress: streetAddress || null,
+        suburb: suburb || null,
+        state: state || null,
+        postcode: postcode || null,
       },
     });
 
@@ -61,6 +95,7 @@ export async function POST(request: Request) {
             displayName: studentName,
             birthday: studentBirthday,
             gradeLevel: gradeLevel || null,
+            gender: gender || null,
             schoolName: schoolName || null,
           },
           select: { id: true, displayName: true },
@@ -71,6 +106,7 @@ export async function POST(request: Request) {
             displayName: studentName,
             birthday: studentBirthday,
             gradeLevel: gradeLevel || null,
+            gender: gender || null,
             schoolName: schoolName || null,
             nativeLanguage: "zh-CN",
           },
@@ -79,6 +115,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ student });
   } catch (error) {
+    if (error instanceof Error && error.message.includes("DD/MM/YYYY")) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+
     return apiErrorResponse(error);
   }
 }

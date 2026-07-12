@@ -3,13 +3,36 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
+const australianStates = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
+const gradeOptions = [
+  "Kindergarten",
+  "Prep",
+  "Year 1",
+  "Year 2",
+  "Year 3",
+  "Year 4",
+  "Year 5",
+  "Year 6",
+  "Year 7",
+  "Year 8",
+  "Year 9",
+  "Year 10",
+  "Year 11",
+  "Year 12",
+];
+const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
+
 export function ProfileSetupPage() {
   const router = useRouter();
   const [parentName, setParentName] = useState("");
   const [parentBirthday, setParentBirthday] = useState("");
-  const [address, setAddress] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
+  const [suburb, setSuburb] = useState("");
+  const [state, setState] = useState("");
+  const [postcode, setPostcode] = useState("");
   const [studentName, setStudentName] = useState("");
   const [studentBirthday, setStudentBirthday] = useState("");
+  const [gender, setGender] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
   const [schoolName, setSchoolName] = useState("");
   const [message, setMessage] = useState("");
@@ -26,9 +49,13 @@ export function ProfileSetupPage() {
       body: JSON.stringify({
         parentName,
         parentBirthday,
-        address,
+        streetAddress,
+        suburb,
+        state,
+        postcode,
         studentName,
         studentBirthday,
+        gender,
         gradeLevel,
         schoolName,
       }),
@@ -50,7 +77,7 @@ export function ProfileSetupPage() {
       <section className="auth-panel profile-setup-panel">
         <p className="eyebrow">Profile setup</p>
         <h1>Complete Your Profile</h1>
-        <p className="auth-intro">Add parent information and the first student before starting writing practice.</p>
+        <p className="auth-intro">Add family details and the first student before starting writing practice.</p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <h3>Parent information</h3>
@@ -61,12 +88,43 @@ export function ProfileSetupPage() {
           <input
             id="parent-birthday"
             onChange={(event) => setParentBirthday(event.target.value)}
-            type="date"
+            inputMode="numeric"
+            pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"
+            placeholder="DD/MM/YYYY"
             value={parentBirthday}
           />
 
-          <label htmlFor="address">Address</label>
-          <input id="address" onChange={(event) => setAddress(event.target.value)} value={address} />
+          <h3>Australian address</h3>
+          <label htmlFor="street-address">Street address</label>
+          <input id="street-address" onChange={(event) => setStreetAddress(event.target.value)} value={streetAddress} />
+
+          <div className="form-grid two-columns">
+            <div>
+              <label htmlFor="suburb">Suburb</label>
+              <input id="suburb" onChange={(event) => setSuburb(event.target.value)} value={suburb} />
+            </div>
+            <div>
+              <label htmlFor="state">State</label>
+              <select id="state" onChange={(event) => setState(event.target.value)} value={state}>
+                <option value="">Select state</option>
+                {australianStates.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <label htmlFor="postcode">Postcode</label>
+          <input
+            id="postcode"
+            inputMode="numeric"
+            maxLength={4}
+            onChange={(event) => setPostcode(event.target.value.replace(/\D/g, ""))}
+            pattern="[0-9]{4}"
+            value={postcode}
+          />
 
           <h3>Student information</h3>
           <label htmlFor="student-name">Student name</label>
@@ -76,12 +134,36 @@ export function ProfileSetupPage() {
           <input
             id="student-birthday"
             onChange={(event) => setStudentBirthday(event.target.value)}
-            type="date"
+            inputMode="numeric"
+            pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"
+            placeholder="DD/MM/YYYY"
             value={studentBirthday}
           />
 
-          <label htmlFor="grade-level">Grade</label>
-          <input id="grade-level" onChange={(event) => setGradeLevel(event.target.value)} placeholder="Grade 5" value={gradeLevel} />
+          <div className="form-grid two-columns">
+            <div>
+              <label htmlFor="student-gender">Gender</label>
+              <select id="student-gender" onChange={(event) => setGender(event.target.value)} value={gender}>
+                <option value="">Select gender</option>
+                {genderOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="grade-level">Grade</label>
+              <select id="grade-level" onChange={(event) => setGradeLevel(event.target.value)} value={gradeLevel}>
+                <option value="">Select grade</option>
+                {gradeOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
           <label htmlFor="school-name">School optional</label>
           <input id="school-name" onChange={(event) => setSchoolName(event.target.value)} value={schoolName} />

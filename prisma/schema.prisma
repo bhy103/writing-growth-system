@@ -47,6 +47,10 @@ model AccountProfile {
   parentName         String
   parentBirthday     DateTime?
   address            String?
+  streetAddress      String?
+  suburb             String?
+  state              String?
+  postcode           String?
   languagePreference String   @default("zh-CN")
   region             String?
   createdAt          DateTime @default(now())
@@ -61,6 +65,7 @@ model StudentProfile {
   displayName    String
   gradeLevel     String?
   birthday       DateTime?
+  gender         String?
   schoolName     String?
   nativeLanguage String?  @default("zh-CN")
   createdAt      DateTime @default(now())
