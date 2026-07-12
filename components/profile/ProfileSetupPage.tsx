@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type ClipboardEvent, type FormEvent, type KeyboardEvent, useState } from "react";
+import { type FormEvent, useState } from "react";
 
 const australianStates = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
 const parentTitleOptions = ["Mr", "Mrs", "Ms", "Miss", "Dr", "Mx"];
@@ -59,87 +59,27 @@ function formatDateParts(day: string, month: string, year: string) {
   return `${day || "00"}/${month || "00"}/${year || "0000"}`;
 }
 
-function formatDateInput(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-
-  if (!digits) {
-    return "";
-  }
-
-  const padded = digits.padEnd(8, "0");
-  return `${padded.slice(0, 2)}/${padded.slice(2, 4)}/${padded.slice(4, 8)}`;
-}
-
-function getEnteredDateDigits(value: string) {
-  const { day, month, year } = getDateParts(value);
-
-  if (!day && !month && !year) {
-    return "";
-  }
-
-  return `${day}${month}${year}`.replace(/0+$/, "");
-}
-
 function DatePickerField({
-  id,
   onChange,
   value,
 }: {
-  id: string;
   onChange: (value: string) => void;
   value: string;
 }) {
   const { day, month, year } = getDateParts(value);
-  const [enteredDigits, setEnteredDigits] = useState(() => getEnteredDateDigits(value));
 
   function updatePart(part: "day" | "month" | "year", nextValue: string) {
-    const nextFormatted = formatDateParts(
-      part === "day" ? nextValue : day === "00" ? "" : day,
-      part === "month" ? nextValue : month === "00" ? "" : month,
-      part === "year" ? nextValue : year === "0000" ? "" : year,
+    onChange(
+      formatDateParts(
+        part === "day" ? nextValue : day === "00" ? "" : day,
+        part === "month" ? nextValue : month === "00" ? "" : month,
+        part === "year" ? nextValue : year === "0000" ? "" : year,
+      ),
     );
-
-    setEnteredDigits(getEnteredDateDigits(nextFormatted));
-    onChange(nextFormatted);
-  }
-
-  function updateTypedDigits(nextDigits: string) {
-    const trimmedDigits = nextDigits.slice(0, 8);
-    setEnteredDigits(trimmedDigits);
-    onChange(formatDateInput(trimmedDigits));
-  }
-
-  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (/^\d$/.test(event.key)) {
-      event.preventDefault();
-      updateTypedDigits(`${enteredDigits}${event.key}`);
-      return;
-    }
-
-    if (event.key === "Backspace" || event.key === "Delete") {
-      event.preventDefault();
-      updateTypedDigits(enteredDigits.slice(0, -1));
-    }
-  }
-
-  function handlePaste(event: ClipboardEvent<HTMLInputElement>) {
-    event.preventDefault();
-    updateTypedDigits(`${enteredDigits}${event.clipboardData.getData("text").replace(/\D/g, "")}`);
   }
 
   return (
     <div className="date-picker-field">
-      <input
-        id={id}
-        inputMode="numeric"
-        maxLength={10}
-        onChange={(event) => updateTypedDigits(event.target.value.replace(/\D/g, ""))}
-        onKeyDown={handleKeyDown}
-        onPaste={handlePaste}
-        pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"
-        placeholder="DD/MM/YYYY"
-        value={value}
-      />
       <div className="date-wheel-grid">
         <select aria-label="Year" onChange={(event) => updatePart("year", event.target.value)} value={year === "0000" ? "" : year}>
           <option value="">Year</option>
@@ -268,7 +208,7 @@ export function ProfileSetupPage() {
           </div>
 
           <label htmlFor="parent-birthday">Parent birthday</label>
-          <DatePickerField id="parent-birthday" onChange={setParentBirthday} value={parentBirthday} />
+          <DatePickerField onChange={setParentBirthday} value={parentBirthday} />
 
           <h3>Australian address</h3>
           <label htmlFor="street-address">Street address</label>
@@ -325,7 +265,7 @@ export function ProfileSetupPage() {
           </div>
 
           <label htmlFor="student-birthday">Student birthday</label>
-          <DatePickerField id="student-birthday" onChange={setStudentBirthday} value={studentBirthday} />
+          <DatePickerField onChange={setStudentBirthday} value={studentBirthday} />
 
           <div className="form-grid two-columns">
             <div>

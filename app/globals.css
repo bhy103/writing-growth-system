@@ -532,12 +532,6 @@ a {
 
 .date-picker-field {
   display: grid;
-  gap: 10px;
-}
-
-.date-picker-field input[type="text"],
-.date-picker-field > input:first-child {
-  width: 100%;
 }
 
 .date-wheel-grid {
