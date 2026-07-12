@@ -1,3 +1,5 @@
+import { StudentManagement } from "@/components/settings/StudentManagement";
+
 type LanguageSettingsProps = {
   onResetPrototypeData: () => void;
 };
@@ -5,6 +7,7 @@ type LanguageSettingsProps = {
 export function LanguageSettings({ onResetPrototypeData }: LanguageSettingsProps) {
   return (
     <section className="view active-view" data-testid="view-settings">
+      <StudentManagement />
       <section className="panel settings-panel">
         <p className="eyebrow">Language</p>
         <h3>Language Settings</h3>

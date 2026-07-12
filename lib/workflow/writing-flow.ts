@@ -16,7 +16,7 @@ export const pageTitles: Record<View, string> = {
   revision: "Revision Workspace",
   history: "Writing History",
   parent: "Parent Progress View",
-  settings: "Language Settings",
+  settings: "Account Settings",
 };
 
 export const viewRoutes: Record<View, string> = {

@@ -750,6 +750,17 @@ a {
   white-space: nowrap;
 }
 
+.student-switcher {
+  min-height: 40px;
+  max-width: 180px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  padding: 0 12px;
+}
+
 .primary-button,
 .secondary-button,
 .small-button,
@@ -787,6 +798,49 @@ a {
   background: var(--surface);
   color: var(--ink);
   border-color: var(--line);
+}
+
+.student-list {
+  display: grid;
+  gap: 10px;
+}
+
+.student-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 14px;
+}
+
+.student-card.active {
+  border-color: var(--green);
+  background: #f4faf2;
+}
+
+.student-card div {
+  display: grid;
+  gap: 4px;
+}
+
+.student-card span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.student-add-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.student-add-form h4 {
+  margin: 0;
 }
 
 .secondary-button:disabled {
