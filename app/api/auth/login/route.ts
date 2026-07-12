@@ -17,6 +17,8 @@ export async function POST(request: Request) {
         email: true,
         passwordHash: true,
         passwordSalt: true,
+        accountProfile: { select: { id: true } },
+        studentProfiles: { select: { id: true }, take: 1 },
       },
     });
 
@@ -26,7 +28,13 @@ export async function POST(request: Request) {
 
     await setSession(user.id);
 
-    return NextResponse.json({ user: { id: user.id, email: user.email } });
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        profileComplete: Boolean(user.accountProfile && user.studentProfiles.length > 0),
+      },
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

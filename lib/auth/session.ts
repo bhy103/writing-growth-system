@@ -64,16 +64,27 @@ export async function getCurrentUser() {
 
   return getPrisma().user.findUnique({
     where: { id: userId },
-    include: { studentProfile: true },
+    include: {
+      accountProfile: true,
+      studentProfiles: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
   });
 }
 
 export async function requireCurrentStudentProfile() {
   const user = await getCurrentUser();
 
-  if (!user?.studentProfile) {
+  if (!user) {
     throw new Error("Please log in before using the writing workspace.");
   }
 
-  return user.studentProfile;
+  const studentProfile = user.studentProfiles[0];
+
+  if (!studentProfile) {
+    throw new Error("Please add a student profile before using the writing workspace.");
+  }
+
+  return studentProfile;
 }

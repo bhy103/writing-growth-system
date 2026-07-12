@@ -32,7 +32,7 @@ export function LoginPage() {
     }
 
     window.localStorage.removeItem(storageKey);
-    router.push("/workspace");
+    router.push(result.user?.profileComplete ? "/workspace" : "/profile-setup");
   }
 
   return (

@@ -7,13 +7,12 @@ import { getPrisma } from "@/lib/db/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => null);
-    const displayName = typeof body?.displayName === "string" ? body.displayName.trim() : "";
     const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body?.password === "string" ? body.password : "";
 
-    if (!displayName || !email || password.length < 8) {
+    if (!email || password.length < 8) {
       return NextResponse.json(
-        { message: "Please enter a student name, email, and password with at least 8 characters." },
+        { message: "Please enter an email and password with at least 8 characters." },
         { status: 400 },
       );
     }
@@ -26,13 +25,6 @@ export async function POST(request: Request) {
         passwordHash: hash,
         passwordSalt: salt,
         role: "STUDENT",
-        studentProfile: {
-          create: {
-            displayName,
-            gradeLevel: null,
-            nativeLanguage: "zh-CN",
-          },
-        },
       },
       select: {
         id: true,

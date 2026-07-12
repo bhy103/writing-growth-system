@@ -13,5 +13,9 @@ export default async function WorkspaceLayout({ children }: WorkspaceLayoutProps
     redirect("/login");
   }
 
+  if (!user.accountProfile || user.studentProfiles.length === 0) {
+    redirect("/profile-setup");
+  }
+
   return children;
 }

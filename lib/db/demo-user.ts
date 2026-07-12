@@ -11,7 +11,13 @@ export async function getDemoStudentProfile() {
     create: {
       email: demoStudentEmail,
       role: "STUDENT",
-      studentProfile: {
+      accountProfile: {
+        create: {
+          parentName: "Demo Parent",
+          languagePreference: "zh-CN",
+        },
+      },
+      studentProfiles: {
         create: {
           displayName: "Demo Student",
           gradeLevel: "Grade 5",
@@ -20,12 +26,14 @@ export async function getDemoStudentProfile() {
       },
     },
     include: {
-      studentProfile: true,
+      studentProfiles: {
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
-  if (user.studentProfile) {
-    return user.studentProfile;
+  if (user.studentProfiles[0]) {
+    return user.studentProfiles[0];
   }
 
   return prisma.studentProfile.create({

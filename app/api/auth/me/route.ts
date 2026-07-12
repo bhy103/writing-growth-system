@@ -12,7 +12,8 @@ export async function GET() {
     user: {
       id: user.id,
       email: user.email,
-      displayName: user.studentProfile?.displayName ?? user.email,
+      displayName: user.studentProfiles[0]?.displayName ?? user.email,
+      profileComplete: Boolean(user.accountProfile && user.studentProfiles.length > 0),
       role: user.role,
     },
   });

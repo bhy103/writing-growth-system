@@ -482,6 +482,10 @@ a {
   padding: 28px;
 }
 
+.profile-setup-panel {
+  width: min(100%, 720px);
+}
+
 .auth-panel h1 {
   font-size: 48px;
 }
@@ -490,6 +494,11 @@ a {
   display: grid;
   gap: 10px;
   margin-top: 6px;
+}
+
+.auth-form h3 {
+  margin: 12px 0 0;
+  font-size: 18px;
 }
 
 .auth-form .primary-button {

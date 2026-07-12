@@ -7,7 +7,6 @@ import { storageKey } from "@/lib/storage/prototype-storage";
 
 export function RegisterPage() {
   const router = useRouter();
-  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -21,7 +20,7 @@ export function RegisterPage() {
     const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ displayName, email, password }),
+      body: JSON.stringify({ email, password }),
     });
     const result = await response.json();
 
@@ -33,7 +32,7 @@ export function RegisterPage() {
     }
 
     window.localStorage.removeItem(storageKey);
-    router.push("/workspace");
+    router.push("/profile-setup");
   }
 
   return (
@@ -44,18 +43,9 @@ export function RegisterPage() {
         </Link>
         <p className="eyebrow">Create account</p>
         <h1>Register</h1>
-        <p className="auth-intro">Create a student account for English writing practice.</p>
+        <p className="auth-intro">Create an account first. Family and student profiles come next.</p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          <label htmlFor="student-name">Student name</label>
-          <input
-            id="student-name"
-            onChange={(event) => setDisplayName(event.target.value)}
-            placeholder="Student name"
-            required
-            value={displayName}
-          />
-
           <label htmlFor="student-email">Email</label>
           <input
             id="student-email"
