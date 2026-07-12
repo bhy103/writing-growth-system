@@ -1,19 +1,28 @@
-import Link from "next/link";
 import { type ChangeEvent } from "react";
+import Link from "next/link";
+import { type DraftSaveStatus } from "@/hooks/useWritingPrototypeState";
 
 type NewWritingSubmissionProps = {
   title: string;
   draft: string;
+  saveStatus: DraftSaveStatus;
+  saveMessage: string;
   onTitleChange: (value: string) => void;
   onDraftChange: (value: string) => void;
+  onSaveDraft: () => void;
 };
 
 export function NewWritingSubmission({
   title,
   draft,
+  saveStatus,
+  saveMessage,
   onTitleChange,
   onDraftChange,
+  onSaveDraft,
 }: NewWritingSubmissionProps) {
+  const isSaving = saveStatus === "saving";
+
   return (
     <section className="view active-view" data-testid="view-new-writing">
       <div className="layout-stack">
@@ -59,9 +68,15 @@ export function NewWritingSubmission({
               onChange={(event: ChangeEvent<HTMLTextAreaElement>) => onDraftChange(event.target.value)}
             />
             <div className="button-row">
-              <Link className="secondary-button" data-testid="save-draft" href="/workspace/history">
-                Save Draft
-              </Link>
+              <button
+                className="secondary-button"
+                data-testid="save-draft"
+                disabled={isSaving}
+                onClick={onSaveDraft}
+                type="button"
+              >
+                {isSaving ? "Saving..." : "Save Draft"}
+              </button>
               <Link className="secondary-button" data-testid="simulate-analysis-failure" href="/workspace/report">
                 Preview Report
               </Link>
@@ -69,6 +84,11 @@ export function NewWritingSubmission({
                 Analyze Writing
               </Link>
             </div>
+            {saveMessage && (
+              <p className={`form-message ${saveStatus === "error" ? "error" : "success"}`}>
+                {saveMessage}
+              </p>
+            )}
           </div>
           <aside className="panel guidance-panel">
             <h3>Writing Coach</h3>

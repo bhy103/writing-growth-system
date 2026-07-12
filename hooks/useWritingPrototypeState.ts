@@ -19,6 +19,7 @@ import { type UploadedSource, type UploadMethod } from "@/lib/upload/upload-sour
 import { type View, viewRoutes } from "@/lib/workflow/writing-flow";
 
 export type AnalysisStatus = "idle" | "analyzing" | "error" | "ready";
+export type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
 
 function getInitialSnapshot() {
   if (typeof window === "undefined") {
@@ -39,6 +40,8 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("image");
   const [uploadedSource, setUploadedSource] = useState<UploadedSource | null>(null);
   const [lowConfidence, setLowConfidence] = useState(false);
+  const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
+  const [draftSaveMessage, setDraftSaveMessage] = useState("");
   const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>(
     initialView === "report" ? "ready" : "idle",
   );
@@ -51,6 +54,51 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   useEffect(() => {
     savePrototypeSnapshot(snapshot);
   }, [snapshot]);
+
+  useEffect(() => {
+    if (view !== "history") {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadHistory() {
+      const response = await fetch("/api/submissions");
+
+      if (!response.ok) {
+        return;
+      }
+
+      const result = await response.json();
+
+      if (cancelled || !Array.isArray(result.submissions)) {
+        return;
+      }
+
+      setSnapshot((currentSnapshot) => ({
+        ...currentSnapshot,
+        history: result.submissions.map((submission: { title: string; status: string; focus: string }) => ({
+          title: submission.title,
+          status: titleCaseStatus(submission.status),
+          focus: submission.focus,
+        })),
+      }));
+    }
+
+    loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [view]);
+
+  function titleCaseStatus(status: string) {
+    return status
+      .toLowerCase()
+      .split("_")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
 
   function setTitle(title: string) {
     setSnapshot((currentSnapshot) => ({ ...currentSnapshot, title }));
@@ -89,7 +137,36 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     router.push(viewRoutes["new-writing"]);
   }
 
-  function saveDraft() {
+  async function saveDraft() {
+    setDraftSaveStatus("saving");
+    setDraftSaveMessage("");
+
+    try {
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: snapshot.title,
+          content: snapshot.draft,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Unable to save this draft.");
+      }
+
+      setDraftSaveStatus("saved");
+      setDraftSaveMessage("Saved to workspace history.");
+    } catch (error) {
+      setDraftSaveStatus("error");
+      setDraftSaveMessage(error instanceof Error ? error.message : "Unable to save this draft.");
+      return;
+    }
+
     const nextSnapshot = {
       ...snapshot,
       history: [{ title: snapshot.title, status: "Draft", focus: "Not analyzed" }, ...snapshot.history],
@@ -151,6 +228,8 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     draft: snapshot.draft,
     setDraft,
     history: snapshot.history,
+    draftSaveStatus,
+    draftSaveMessage,
     report,
     uploadMethod,
     uploadedSource,
