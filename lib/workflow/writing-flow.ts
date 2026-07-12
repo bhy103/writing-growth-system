@@ -11,7 +11,7 @@ export type View =
 export const pageTitles: Record<View, string> = {
   dashboard: "Dashboard",
   "new-writing": "New Writing",
-  "upload-review": "Upload & Text Review",
+  "upload-review": "Upload Submission",
   report: "AI Writing Report",
   revision: "Revision Workspace",
   history: "Writing History",

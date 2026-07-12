@@ -33,6 +33,16 @@ export function buildPendingStoragePath({
   return `pending-storage/${studentId}/${Date.now()}-${sanitizeStorageName(fileName)}`;
 }
 
+export function buildStoredUploadPath({
+  fileName,
+  studentId,
+}: {
+  fileName: string;
+  studentId: string;
+}) {
+  return `student-uploads/${studentId}/${Date.now()}-${sanitizeStorageName(fileName)}`;
+}
+
 export function sanitizeStorageName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 120) || "uploaded-writing";
 }

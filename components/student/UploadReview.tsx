@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { type ChangeEvent, useEffect, useMemo, useState } from "react";
-import { sampleExtractedText } from "@/lib/mock/mock-data";
+import { useEffect, useMemo } from "react";
+import { type DraftSaveStatus } from "@/hooks/useWritingPrototypeState";
 import { formatFileSize, type UploadedSource } from "@/lib/upload/upload-source";
 
 type UploadMethod = "photo" | "image" | "document";
@@ -8,27 +7,31 @@ type UploadMethod = "photo" | "image" | "document";
 type UploadReviewProps = {
   uploadMethod: UploadMethod;
   uploadedSource: UploadedSource | null;
-  confidence: string;
-  state: string;
-  lowConfidence: boolean;
+  uploadTitle: string;
+  uploadSaveStatus: DraftSaveStatus;
+  uploadSaveMessage: string;
+  onUploadTitleChange: (title: string) => void;
   onChooseAnother: () => void;
-  onMarkLowConfidence: () => void;
-  onConfirmText: (text: string) => void;
+  onSaveUploadedSource: () => void;
 };
 
 export function UploadReview({
   uploadMethod,
   uploadedSource,
-  confidence,
-  state,
-  lowConfidence,
-  onMarkLowConfidence,
-  onConfirmText,
+  uploadTitle,
+  uploadSaveStatus,
+  uploadSaveMessage,
+  onUploadTitleChange,
+  onChooseAnother,
+  onSaveUploadedSource,
 }: UploadReviewProps) {
-  const extractedText = sampleExtractedText[uploadMethod];
-  const [reviewText, setReviewText] = useState(extractedText);
   const isImageSource =
     uploadedSource?.file.type.startsWith("image/") || uploadMethod === "photo" || uploadMethod === "image";
+  const methodLabel = {
+    photo: "Photo",
+    image: "Image",
+    document: "Document",
+  }[uploadMethod];
   const previewUrl = useMemo(() => {
     if (!uploadedSource || !isImageSource) {
       return "";
@@ -50,7 +53,7 @@ export function UploadReview({
       <section className="upload-review-layout">
         <div className="panel upload-preview-panel">
           <p className="eyebrow">Source file</p>
-          <h3>{uploadMethod} review</h3>
+          <h3>{methodLabel} submission</h3>
           <div className="source-preview">
             {previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -67,35 +70,37 @@ export function UploadReview({
           </div>
         </div>
         <div className="panel">
-          <p className="eyebrow">Text review</p>
-          <h3>Confirm extracted English text</h3>
-          <p className="panel-note">Review and edit the text before sending it to the writing workspace.</p>
-          <div className={`review-status ${lowConfidence ? "low-confidence" : ""}`}>
-            <span>Extraction confidence: {confidence}</span>
-            <strong>{state}</strong>
-          </div>
-          {lowConfidence && (
-            <div className="review-warning visible">Low-confidence text should be checked carefully.</div>
-          )}
-          <textarea
-            className="review-textarea"
-            onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setReviewText(event.target.value)}
-            value={reviewText}
+          <p className="eyebrow">Submission details</p>
+          <h3>Save uploaded source</h3>
+          <p className="panel-note">The original file will be saved securely. Text extraction can be added later.</p>
+          <label htmlFor="upload-title">Title</label>
+          <input
+            id="upload-title"
+            onChange={(event) => onUploadTitleChange(event.target.value)}
+            placeholder="Writing title"
+            value={uploadTitle}
           />
+          <div className="review-status ready">
+            <span>Submission type</span>
+            <strong>{methodLabel}</strong>
+          </div>
+          {uploadSaveMessage && (
+            <p className={`form-message ${uploadSaveStatus === "error" ? "error" : "success"}`}>
+              {uploadSaveMessage}
+            </p>
+          )}
           <div className="button-row">
-            <Link className="secondary-button" href="/workspace/new-writing">
+            <button className="secondary-button" onClick={onChooseAnother} type="button">
               Choose another
-            </Link>
-            <button className="secondary-button" data-testid="mark-low-confidence" onClick={onMarkLowConfidence}>
-              Mark low confidence
             </button>
             <button
               className="primary-button"
-              data-testid="confirm-review-text"
-              onClick={() => onConfirmText(reviewText)}
+              data-testid="save-uploaded-source"
+              disabled={uploadSaveStatus === "saving"}
+              onClick={onSaveUploadedSource}
               type="button"
             >
-              Confirm Text
+              {uploadSaveStatus === "saving" ? "Saving..." : "Save Upload"}
             </button>
           </div>
         </div>

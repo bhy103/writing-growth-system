@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api/error-response";
 import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
-import { buildPendingStoragePath, uploadFileToConfiguredStorage } from "@/lib/upload/upload-storage";
+import {
+  buildPendingStoragePath,
+  buildStoredUploadPath,
+  isObjectStorageConfigured,
+  uploadFileToConfiguredStorage,
+} from "@/lib/upload/upload-storage";
 
 const sourceTypeByUploadMethod = {
   photo: "PHOTO",
@@ -63,7 +68,8 @@ async function parseSubmissionRequest(request: Request) {
     const fileValue = formData.get("file");
     const file = fileValue instanceof File ? fileValue : null;
     const method = getFormValue(formData, "uploadMethod");
-    const extractionConfidence = Number(getFormValue(formData, "extractionConfidence"));
+    const extractionConfidenceValue = getFormValue(formData, "extractionConfidence");
+    const extractionConfidence = extractionConfidenceValue ? Number(extractionConfidenceValue) : null;
 
     return {
       content: getFormValue(formData, "content"),
@@ -72,7 +78,10 @@ async function parseSubmissionRequest(request: Request) {
       upload:
         file && method in sourceTypeByUploadMethod
           ? {
-              extractionConfidence: Number.isFinite(extractionConfidence) ? extractionConfidence : null,
+              extractionConfidence:
+                typeof extractionConfidence === "number" && Number.isFinite(extractionConfidence)
+                  ? extractionConfidence
+                  : null,
               extractedText: getFormValue(formData, "extractedText"),
               file,
               fileName: file.name,
@@ -136,9 +145,9 @@ export async function POST(request: Request) {
   try {
     const { content, submissionId, title, upload } = await parseSubmissionRequest(request);
 
-    if (!title || !content) {
+    if (!title || (!content && !upload)) {
       return NextResponse.json(
-        { message: "Please add a title and English draft before saving." },
+        { message: "Please add a title and English draft, or upload a source file." },
         { status: 400 },
       );
     }
@@ -161,7 +170,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "This writing submission does not belong to the current student." }, { status: 403 });
     }
 
-    const storagePath = upload ? buildPendingStoragePath({ fileName: upload.fileName, studentId: student.id }) : "";
+    const storagePath = upload
+      ? isObjectStorageConfigured()
+        ? buildStoredUploadPath({ fileName: upload.fileName, studentId: student.id })
+        : buildPendingStoragePath({ fileName: upload.fileName, studentId: student.id })
+      : "";
     const storedUpload = upload?.file
       ? await uploadFileToConfiguredStorage({
           file: upload.file,
@@ -176,7 +189,7 @@ export async function POST(request: Request) {
           },
           data: {
             title,
-            content,
+            content: content || null,
             status: "DRAFT",
           },
           select: {
@@ -190,7 +203,7 @@ export async function POST(request: Request) {
           data: {
             studentId: student.id,
             title,
-            content,
+            content: content || null,
             sourceType: upload ? sourceTypeByUploadMethod[upload.method] : "TYPED_TEXT",
             status: "DRAFT",
             uploads: upload

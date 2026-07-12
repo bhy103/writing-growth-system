@@ -45,12 +45,12 @@ export function WritingGrowthPrototype({ initialView = "dashboard" }: WritingGro
           key={`${prototype.uploadMethod}-${prototype.uploadedSource?.file.name ?? "sample"}-${prototype.uploadedSource?.file.lastModified ?? "0"}`}
           uploadMethod={prototype.uploadMethod}
           uploadedSource={prototype.uploadedSource}
-          confidence={prototype.currentMeta.confidence}
-          state={prototype.currentMeta.state}
-          lowConfidence={prototype.lowConfidence}
+          uploadTitle={prototype.uploadTitle}
+          uploadSaveStatus={prototype.uploadSaveStatus}
+          uploadSaveMessage={prototype.uploadSaveMessage}
+          onUploadTitleChange={prototype.setUploadTitle}
           onChooseAnother={prototype.chooseAnotherUpload}
-          onMarkLowConfidence={() => prototype.setLowConfidence(true)}
-          onConfirmText={prototype.confirmUploadedText}
+          onSaveUploadedSource={prototype.saveUploadedSource}
         />
       )}
 

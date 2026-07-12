@@ -7,7 +7,6 @@ import {
   createParentSummary,
   type MockReport,
 } from "@/lib/mock/mock-analysis";
-import { extractionMeta } from "@/lib/mock/mock-data";
 import {
   clearPrototypeSnapshot,
   defaultPrototypeSnapshot,
@@ -33,11 +32,6 @@ function getInitialSnapshot() {
 function getTitleFromUploadedFile(fileName: string) {
   const withoutExtension = fileName.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
   return withoutExtension || "Uploaded Writing";
-}
-
-function parseConfidencePercent(confidence: string) {
-  const parsed = Number(confidence.replace("%", ""));
-  return Number.isFinite(parsed) ? parsed / 100 : null;
 }
 
 async function readJsonResponse(response: Response) {
@@ -66,7 +60,9 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   });
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("image");
   const [uploadedSource, setUploadedSource] = useState<UploadedSource | null>(null);
-  const [lowConfidence, setLowConfidence] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadSaveStatus, setUploadSaveStatus] = useState<DraftSaveStatus>("idle");
+  const [uploadSaveMessage, setUploadSaveMessage] = useState("");
   const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
   const [draftSaveMessage, setDraftSaveMessage] = useState("");
   const [revisionDraft, setRevisionDraft] = useState("");
@@ -78,9 +74,6 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   );
 
   const parentSummary = useMemo(() => createParentSummary(report), [report]);
-  const currentMeta = lowConfidence
-    ? { confidence: "58%", state: "Low confidence - review carefully" }
-    : extractionMeta[uploadMethod];
 
   useEffect(() => {
     savePrototypeSnapshot(snapshot);
@@ -242,49 +235,63 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   function openUpload(method: UploadMethod, file: File) {
     setUploadMethod(method);
     setUploadedSource({ method, file });
-    setLowConfidence(method === "photo");
+    setUploadTitle(getTitleFromUploadedFile(file.name));
+    setUploadSaveStatus("idle");
+    setUploadSaveMessage("");
     setView("upload-review");
     router.push(viewRoutes["upload-review"]);
   }
 
-  async function confirmUploadedText(text: string) {
-    const nextTitle = snapshot.title || (uploadedSource ? getTitleFromUploadedFile(uploadedSource.file.name) : "Uploaded Writing");
-    const nextSnapshot = { ...snapshot, title: nextTitle, draft: text };
-    let savedSubmissionId = "";
-
-    if (uploadedSource) {
-      try {
-        const formData = new FormData();
-        formData.set("title", nextTitle);
-        formData.set("content", text);
-        formData.set("uploadMethod", uploadedSource.method);
-        formData.set("extractionConfidence", String(parseConfidencePercent(currentMeta.confidence) ?? ""));
-        formData.set("extractedText", text);
-        formData.set("file", uploadedSource.file);
-
-        const response = await fetch("/api/submissions", {
-          method: "POST",
-          body: formData,
-        });
-        const result = await readJsonResponse(response);
-
-        if (response.ok && typeof result.submission?.id === "string") {
-          savedSubmissionId = result.submission.id;
-          setCurrentSubmissionId(savedSubmissionId);
-          nextSnapshot.history = [
-            { id: savedSubmissionId, title: nextTitle, status: "Draft", focus: "Not analyzed" },
-            ...nextSnapshot.history,
-          ];
-        }
-      } catch {
-        // Keep the student moving even if upload metadata cannot be saved yet.
-      }
+  async function saveUploadedSource() {
+    if (!uploadedSource) {
+      setUploadSaveStatus("error");
+      setUploadSaveMessage("Please choose a source file first.");
+      return;
     }
 
-    setSnapshot(nextSnapshot);
-    savePrototypeSnapshot(nextSnapshot);
-    setView("new-writing");
-    router.push(savedSubmissionId ? `${viewRoutes["new-writing"]}?submissionId=${savedSubmissionId}` : viewRoutes["new-writing"]);
+    const nextTitle = uploadTitle.trim() || getTitleFromUploadedFile(uploadedSource.file.name);
+    setUploadSaveStatus("saving");
+    setUploadSaveMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.set("title", nextTitle);
+      formData.set("content", "");
+      formData.set("uploadMethod", uploadedSource.method);
+      formData.set("extractedText", "");
+      formData.set("file", uploadedSource.file);
+
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await readJsonResponse(response);
+
+      if (!response.ok || typeof result.submission?.id !== "string") {
+        throw new Error(result.message ?? "Unable to save this upload.");
+      }
+
+      const savedSubmissionId = result.submission.id;
+      setCurrentSubmissionId(savedSubmissionId);
+      setUploadSaveStatus("saved");
+      setUploadSaveMessage("Upload saved.");
+
+      const nextSnapshot = {
+        ...snapshot,
+        title: nextTitle,
+        draft: "",
+        history: [
+          { id: savedSubmissionId, title: nextTitle, status: "Draft", focus: "Source uploaded" },
+          ...snapshot.history.filter((item) => item.id !== savedSubmissionId),
+        ],
+      };
+      setSnapshot(nextSnapshot);
+      savePrototypeSnapshot(nextSnapshot);
+      router.push(`/workspace/history/${savedSubmissionId}`);
+    } catch (error) {
+      setUploadSaveStatus("error");
+      setUploadSaveMessage(error instanceof Error ? error.message : "Unable to save this upload.");
+    }
   }
 
   async function saveDraft() {
@@ -411,9 +418,11 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
       }),
     );
     setAnalysisStatus("idle");
-    setLowConfidence(false);
     setUploadMethod("image");
     setUploadedSource(null);
+    setUploadTitle("");
+    setUploadSaveStatus("idle");
+    setUploadSaveMessage("");
     setView("dashboard");
     router.push(viewRoutes.dashboard);
   }
@@ -435,15 +444,16 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     report,
     uploadMethod,
     uploadedSource,
-    lowConfidence,
-    setLowConfidence,
+    uploadTitle,
+    setUploadTitle,
+    uploadSaveStatus,
+    uploadSaveMessage,
     analysisStatus,
     parentSummary,
-    currentMeta,
     openReport,
     simulateFailure,
     openUpload,
-    confirmUploadedText,
+    saveUploadedSource,
     saveDraft,
     saveRevision,
     openRevision,
