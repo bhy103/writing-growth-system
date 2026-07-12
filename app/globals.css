@@ -1073,6 +1073,11 @@ a {
   text-align: left;
 }
 
+button.submission-option {
+  cursor: pointer;
+  font: inherit;
+}
+
 .submission-option:hover,
 .submission-option.selected {
   border-color: var(--green);

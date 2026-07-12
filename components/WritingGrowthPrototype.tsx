@@ -33,6 +33,7 @@ export function WritingGrowthPrototype({ initialView = "dashboard" }: WritingGro
           onDraftChange={prototype.setDraft}
           onSaveDraft={prototype.saveDraft}
           onAnalyzeWriting={prototype.openReport}
+          onUploadFile={prototype.openUpload}
           saveStatus={prototype.draftSaveStatus}
           analysisStatus={prototype.analysisStatus}
           saveMessage={prototype.draftSaveMessage}
@@ -41,6 +42,7 @@ export function WritingGrowthPrototype({ initialView = "dashboard" }: WritingGro
 
       {prototype.view === "upload-review" && (
         <UploadReview
+          key={`${prototype.uploadMethod}-${prototype.uploadedSource?.file.name ?? "sample"}-${prototype.uploadedSource?.file.lastModified ?? "0"}`}
           uploadMethod={prototype.uploadMethod}
           uploadedSource={prototype.uploadedSource}
           confidence={prototype.currentMeta.confidence}

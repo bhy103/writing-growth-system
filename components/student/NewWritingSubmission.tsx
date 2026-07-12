@@ -1,6 +1,7 @@
-import { type ChangeEvent } from "react";
+import { type ChangeEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { type AnalysisStatus, type DraftSaveStatus } from "@/hooks/useWritingPrototypeState";
+import { documentAccept, type UploadMethod, validateUploadFile } from "@/lib/upload/upload-source";
 
 type NewWritingSubmissionProps = {
   title: string;
@@ -12,6 +13,7 @@ type NewWritingSubmissionProps = {
   onDraftChange: (value: string) => void;
   onSaveDraft: () => void;
   onAnalyzeWriting: () => void;
+  onUploadFile: (method: UploadMethod, file: File) => void;
 };
 
 export function NewWritingSubmission({
@@ -24,9 +26,49 @@ export function NewWritingSubmission({
   onDraftChange,
   onSaveDraft,
   onAnalyzeWriting,
+  onUploadFile,
 }: NewWritingSubmissionProps) {
   const isSaving = saveStatus === "saving";
   const isAnalyzing = analysisStatus === "analyzing";
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState("");
+
+  function chooseFile(method: UploadMethod) {
+    setUploadError("");
+
+    if (method === "photo") {
+      photoInputRef.current?.click();
+      return;
+    }
+
+    if (method === "image") {
+      imageInputRef.current?.click();
+      return;
+    }
+
+    documentInputRef.current?.click();
+  }
+
+  function handleFileChange(method: UploadMethod, event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    const validationError = validateUploadFile(method, file);
+
+    if (validationError) {
+      setUploadError(validationError);
+      return;
+    }
+
+    setUploadError("");
+    onUploadFile(method, file);
+  }
 
   return (
     <section className="view active-view" data-testid="view-new-writing">
@@ -40,22 +82,60 @@ export function NewWritingSubmission({
               <strong>Type directly</strong>
               <small>Available in first MVP</small>
             </Link>
-            <Link className="submission-option placeholder" data-testid="submission-photo" href="/workspace/upload-review">
+            <button
+              className="submission-option placeholder"
+              data-testid="submission-photo"
+              onClick={() => chooseFile("photo")}
+              type="button"
+            >
               <span className="option-icon">C</span>
               <strong>Take photo</strong>
-              <small>Open review frame</small>
-            </Link>
-            <Link className="submission-option placeholder" data-testid="submission-image" href="/workspace/upload-review">
+              <small>Choose a camera image</small>
+            </button>
+            <button
+              className="submission-option placeholder"
+              data-testid="submission-image"
+              onClick={() => chooseFile("image")}
+              type="button"
+            >
               <span className="option-icon">I</span>
               <strong>Upload image</strong>
-              <small>Open review frame</small>
-            </Link>
-            <Link className="submission-option placeholder" data-testid="submission-document" href="/workspace/upload-review">
+              <small>Choose JPG, PNG, WebP, or HEIC</small>
+            </button>
+            <button
+              className="submission-option placeholder"
+              data-testid="submission-document"
+              onClick={() => chooseFile("document")}
+              type="button"
+            >
               <span className="option-icon">D</span>
               <strong>Upload document</strong>
-              <small>Open review frame</small>
-            </Link>
+              <small>Choose PDF, Word, or TXT</small>
+            </button>
           </div>
+          <input
+            ref={photoInputRef}
+            accept="image/*"
+            capture="environment"
+            className="visually-hidden-file"
+            onChange={(event) => handleFileChange("photo", event)}
+            type="file"
+          />
+          <input
+            ref={imageInputRef}
+            accept="image/*"
+            className="visually-hidden-file"
+            onChange={(event) => handleFileChange("image", event)}
+            type="file"
+          />
+          <input
+            ref={documentInputRef}
+            accept={documentAccept}
+            className="visually-hidden-file"
+            onChange={(event) => handleFileChange("document", event)}
+            type="file"
+          />
+          {uploadError && <p className="form-message error">{uploadError}</p>}
         </section>
 
         <section className="editor-layout">

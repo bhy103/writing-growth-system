@@ -13,7 +13,7 @@ export const sampleExtractedText = {
 };
 
 export const extractionMeta = {
-  photo: { confidence: "72%", state: "Low confidence · review carefully" },
+  photo: { confidence: "72%", state: "Low confidence - review carefully" },
   image: { confidence: "88%", state: "Needs review" },
   document: { confidence: "96%", state: "Ready to confirm" },
 };
