@@ -1,10 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type FormEvent, useRef, useState } from "react";
+import { type ClipboardEvent, type FormEvent, type KeyboardEvent, useState } from "react";
 
 const australianStates = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
 const parentTitleOptions = ["Mr", "Mrs", "Ms", "Miss", "Dr", "Mx"];
+const monthOptions = [
+  { label: "Jan", value: "01" },
+  { label: "Feb", value: "02" },
+  { label: "Mar", value: "03" },
+  { label: "Apr", value: "04" },
+  { label: "May", value: "05" },
+  { label: "Jun", value: "06" },
+  { label: "Jul", value: "07" },
+  { label: "Aug", value: "08" },
+  { label: "Sep", value: "09" },
+  { label: "Oct", value: "10" },
+  { label: "Nov", value: "11" },
+  { label: "Dec", value: "12" },
+];
 const gradeOptions = [
   "Kindergarten",
   "Prep",
@@ -22,36 +36,48 @@ const gradeOptions = [
   "Year 12",
 ];
 const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
+const currentYear = new Date().getFullYear();
+const yearOptions = Array.from({ length: currentYear - 1919 }, (_, index) => String(currentYear - index));
+const dayOptions = Array.from({ length: 31 }, (_, index) => String(index + 1).padStart(2, "0"));
 
-function toNativeDateValue(value: string) {
+function getDateParts(value: string) {
   const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
 
   if (!match) {
-    return "";
+    return { day: "", month: "", year: "" };
   }
 
   const [, day, month, year] = match;
-  const parsed = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
-
-  if (
-    Number.isNaN(parsed.getTime()) ||
-    parsed.getUTCDate() !== Number(day) ||
-    parsed.getUTCMonth() + 1 !== Number(month) ||
-    parsed.getUTCFullYear() !== Number(year)
-  ) {
-    return "";
-  }
-
-  return `${year}-${month}-${day}`;
+  return { day, month, year };
 }
 
-function fromNativeDateValue(value: string) {
-  if (!value) {
+function formatDateParts(day: string, month: string, year: string) {
+  if (!day && !month && !year) {
     return "";
   }
 
-  const [year, month, day] = value.split("-");
-  return `${day}/${month}/${year}`;
+  return `${day || "00"}/${month || "00"}/${year || "0000"}`;
+}
+
+function formatDateInput(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+
+  if (!digits) {
+    return "";
+  }
+
+  const padded = digits.padEnd(8, "0");
+  return `${padded.slice(0, 2)}/${padded.slice(2, 4)}/${padded.slice(4, 8)}`;
+}
+
+function getEnteredDateDigits(value: string) {
+  const { day, month, year } = getDateParts(value);
+
+  if (!day && !month && !year) {
+    return "";
+  }
+
+  return `${day}${month}${year}`.replace(/0+$/, "");
 }
 
 function DatePickerField({
@@ -63,21 +89,42 @@ function DatePickerField({
   onChange: (value: string) => void;
   value: string;
 }) {
-  const nativeInputRef = useRef<HTMLInputElement>(null);
+  const { day, month, year } = getDateParts(value);
+  const [enteredDigits, setEnteredDigits] = useState(() => getEnteredDateDigits(value));
 
-  function openCalendar() {
-    const nativeInput = nativeInputRef.current;
+  function updatePart(part: "day" | "month" | "year", nextValue: string) {
+    const nextFormatted = formatDateParts(
+      part === "day" ? nextValue : day === "00" ? "" : day,
+      part === "month" ? nextValue : month === "00" ? "" : month,
+      part === "year" ? nextValue : year === "0000" ? "" : year,
+    );
 
-    if (!nativeInput) {
+    setEnteredDigits(getEnteredDateDigits(nextFormatted));
+    onChange(nextFormatted);
+  }
+
+  function updateTypedDigits(nextDigits: string) {
+    const trimmedDigits = nextDigits.slice(0, 8);
+    setEnteredDigits(trimmedDigits);
+    onChange(formatDateInput(trimmedDigits));
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (/^\d$/.test(event.key)) {
+      event.preventDefault();
+      updateTypedDigits(`${enteredDigits}${event.key}`);
       return;
     }
 
-    if (typeof nativeInput.showPicker === "function") {
-      nativeInput.showPicker();
-      return;
+    if (event.key === "Backspace" || event.key === "Delete") {
+      event.preventDefault();
+      updateTypedDigits(enteredDigits.slice(0, -1));
     }
+  }
 
-    nativeInput.click();
+  function handlePaste(event: ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault();
+    updateTypedDigits(`${enteredDigits}${event.clipboardData.getData("text").replace(/\D/g, "")}`);
   }
 
   return (
@@ -85,31 +132,40 @@ function DatePickerField({
       <input
         id={id}
         inputMode="numeric"
-        onChange={(event) => onChange(event.target.value)}
+        maxLength={10}
+        onChange={(event) => updateTypedDigits(event.target.value.replace(/\D/g, ""))}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"
         placeholder="DD/MM/YYYY"
         value={value}
       />
-      <button aria-label="Open calendar" className="date-picker-button" onClick={openCalendar} type="button">
-        <svg aria-hidden="true" fill="none" height="22" viewBox="0 0 24 24" width="22">
-          <path
-            d="M7 3v3M17 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-          />
-        </svg>
-      </button>
-      <input
-        aria-hidden="true"
-        className="native-date-input"
-        onChange={(event) => onChange(fromNativeDateValue(event.target.value))}
-        ref={nativeInputRef}
-        tabIndex={-1}
-        type="date"
-        value={toNativeDateValue(value)}
-      />
+      <div className="date-wheel-grid">
+        <select aria-label="Year" onChange={(event) => updatePart("year", event.target.value)} value={year === "0000" ? "" : year}>
+          <option value="">Year</option>
+          {yearOptions.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+        <select aria-label="Month" onChange={(event) => updatePart("month", event.target.value)} value={month === "00" ? "" : month}>
+          <option value="">Month</option>
+          {monthOptions.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+        <select aria-label="Day" onChange={(event) => updatePart("day", event.target.value)} value={day === "00" ? "" : day}>
+          <option value="">Day</option>
+          {dayOptions.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
