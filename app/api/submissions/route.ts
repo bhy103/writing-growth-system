@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api/error-response";
 import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
+import { buildPendingStoragePath, uploadFileToConfiguredStorage } from "@/lib/upload/upload-storage";
 
 const sourceTypeByUploadMethod = {
   photo: "PHOTO",
@@ -9,11 +10,17 @@ const sourceTypeByUploadMethod = {
   document: "DOCUMENT_UPLOAD",
 } as const;
 
-function sanitizeStorageName(fileName: string) {
-  return fileName.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 120) || "uploaded-writing";
-}
+type UploadMetadata = {
+  extractionConfidence: number | null;
+  extractedText: string;
+  file?: File;
+  fileName: string;
+  fileSize: number | null;
+  fileType: string;
+  method: keyof typeof sourceTypeByUploadMethod;
+};
 
-function parseUploadMetadata(body: Record<string, unknown>) {
+function parseUploadMetadata(body: Record<string, unknown>): UploadMetadata | null {
   if (!body.upload || typeof body.upload !== "object") {
     return null;
   }
@@ -34,12 +41,57 @@ function parseUploadMetadata(body: Record<string, unknown>) {
   }
 
   return {
-    method: method as keyof typeof sourceTypeByUploadMethod,
-    fileName,
-    fileType: fileType || "unknown",
-    fileSize,
     extractionConfidence,
     extractedText,
+    fileName,
+    fileSize,
+    fileType: fileType || "unknown",
+    method: method as keyof typeof sourceTypeByUploadMethod,
+  };
+}
+
+function getFormValue(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function parseSubmissionRequest(request: Request) {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const fileValue = formData.get("file");
+    const file = fileValue instanceof File ? fileValue : null;
+    const method = getFormValue(formData, "uploadMethod");
+    const extractionConfidence = Number(getFormValue(formData, "extractionConfidence"));
+
+    return {
+      content: getFormValue(formData, "content"),
+      submissionId: getFormValue(formData, "submissionId"),
+      title: getFormValue(formData, "title"),
+      upload:
+        file && method in sourceTypeByUploadMethod
+          ? {
+              extractionConfidence: Number.isFinite(extractionConfidence) ? extractionConfidence : null,
+              extractedText: getFormValue(formData, "extractedText"),
+              file,
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type || "unknown",
+              method: method as keyof typeof sourceTypeByUploadMethod,
+            }
+          : null,
+    };
+  }
+
+  const body = await request.json().catch(() => null);
+  const record = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+
+  return {
+    content: typeof record.content === "string" ? record.content.trim() : "",
+    submissionId: typeof record.submissionId === "string" ? record.submissionId : "",
+    title: typeof record.title === "string" ? record.title.trim() : "",
+    upload: parseUploadMetadata(record),
   };
 }
 
@@ -82,12 +134,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => null);
-
-    const title = typeof body?.title === "string" ? body.title.trim() : "";
-    const content = typeof body?.content === "string" ? body.content.trim() : "";
-    const submissionId = typeof body?.submissionId === "string" ? body.submissionId : "";
-    const upload = body && typeof body === "object" ? parseUploadMetadata(body as Record<string, unknown>) : null;
+    const { content, submissionId, title, upload } = await parseSubmissionRequest(request);
 
     if (!title || !content) {
       return NextResponse.json(
@@ -113,6 +160,14 @@ export async function POST(request: Request) {
     if (submissionId && !ownedSubmission) {
       return NextResponse.json({ message: "This writing submission does not belong to the current student." }, { status: 403 });
     }
+
+    const storagePath = upload ? buildPendingStoragePath({ fileName: upload.fileName, studentId: student.id }) : "";
+    const storedUpload = upload?.file
+      ? await uploadFileToConfiguredStorage({
+          file: upload.file,
+          storagePath,
+        })
+      : null;
 
     const submission = ownedSubmission
       ? await prisma.writingSubmission.update({
@@ -144,7 +199,7 @@ export async function POST(request: Request) {
                     fileName: upload.fileName,
                     fileType: upload.fileType,
                     fileSize: upload.fileSize,
-                    storagePath: `pending-storage/${student.id}/${Date.now()}-${sanitizeStorageName(upload.fileName)}`,
+                    storagePath: storedUpload?.storagePath ?? storagePath,
                     extractionConfidence: upload.extractionConfidence,
                     extractedText: upload.extractedText || content,
                   },

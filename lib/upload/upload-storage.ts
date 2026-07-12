@@ -1,0 +1,76 @@
+type UploadFileToStorageInput = {
+  file: File;
+  storagePath: string;
+};
+
+function getSupabaseStorageConfig() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "writing-uploads";
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return null;
+  }
+
+  return {
+    bucket,
+    serviceRoleKey,
+    supabaseUrl: supabaseUrl.replace(/\/$/, ""),
+  };
+}
+
+export function isObjectStorageConfigured() {
+  return Boolean(getSupabaseStorageConfig());
+}
+
+export function buildPendingStoragePath({
+  fileName,
+  studentId,
+}: {
+  fileName: string;
+  studentId: string;
+}) {
+  return `pending-storage/${studentId}/${Date.now()}-${sanitizeStorageName(fileName)}`;
+}
+
+export function sanitizeStorageName(fileName: string) {
+  return fileName.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 120) || "uploaded-writing";
+}
+
+export async function uploadFileToConfiguredStorage({
+  file,
+  storagePath,
+}: UploadFileToStorageInput) {
+  const config = getSupabaseStorageConfig();
+
+  if (!config) {
+    return {
+      storagePath,
+      stored: false,
+    };
+  }
+
+  const encodedPath = storagePath.split("/").map(encodeURIComponent).join("/");
+  const response = await fetch(
+    `${config.supabaseUrl}/storage/v1/object/${config.bucket}/${encodedPath}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        "Content-Type": file.type || "application/octet-stream",
+        "x-upsert": "false",
+      },
+      body: await file.arrayBuffer(),
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(errorText || "Unable to store the uploaded file.");
+  }
+
+  return {
+    storagePath,
+    stored: true,
+  };
+}

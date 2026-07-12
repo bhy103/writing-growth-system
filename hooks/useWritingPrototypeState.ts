@@ -254,23 +254,17 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
 
     if (uploadedSource) {
       try {
+        const formData = new FormData();
+        formData.set("title", nextTitle);
+        formData.set("content", text);
+        formData.set("uploadMethod", uploadedSource.method);
+        formData.set("extractionConfidence", String(parseConfidencePercent(currentMeta.confidence) ?? ""));
+        formData.set("extractedText", text);
+        formData.set("file", uploadedSource.file);
+
         const response = await fetch("/api/submissions", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: nextTitle,
-            content: text,
-            upload: {
-              method: uploadedSource.method,
-              fileName: uploadedSource.file.name,
-              fileType: uploadedSource.file.type,
-              fileSize: uploadedSource.file.size,
-              extractionConfidence: parseConfidencePercent(currentMeta.confidence),
-              extractedText: text,
-            },
-          }),
+          body: formData,
         });
         const result = await readJsonResponse(response);
 
