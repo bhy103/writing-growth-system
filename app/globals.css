@@ -511,6 +511,10 @@ a {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.form-grid.parent-name-grid {
+  grid-template-columns: 140px minmax(0, 1fr) minmax(0, 1fr);
+}
+
 .form-grid label {
   display: block;
   margin-bottom: 8px;
@@ -1496,6 +1500,7 @@ blockquote {
   .submission-grid,
   .rubric-grid,
   .two-columns,
+  .form-grid.parent-name-grid,
   .upload-review-layout,
   .editor-layout,
   .revision-layout,

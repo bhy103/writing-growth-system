@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 
 const australianStates = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
+const parentTitleOptions = ["Mr", "Mrs", "Ms", "Miss", "Dr", "Mx"];
 const gradeOptions = [
   "Kindergarten",
   "Prep",
@@ -115,13 +116,16 @@ function DatePickerField({
 
 export function ProfileSetupPage() {
   const router = useRouter();
-  const [parentName, setParentName] = useState("");
+  const [parentTitle, setParentTitle] = useState("");
+  const [parentFirstName, setParentFirstName] = useState("");
+  const [parentFamilyName, setParentFamilyName] = useState("");
   const [parentBirthday, setParentBirthday] = useState("");
   const [streetAddress, setStreetAddress] = useState("");
   const [suburb, setSuburb] = useState("");
   const [state, setState] = useState("");
   const [postcode, setPostcode] = useState("");
-  const [studentName, setStudentName] = useState("");
+  const [studentFirstName, setStudentFirstName] = useState("");
+  const [studentFamilyName, setStudentFamilyName] = useState("");
   const [studentBirthday, setStudentBirthday] = useState("");
   const [gender, setGender] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
@@ -138,13 +142,16 @@ export function ProfileSetupPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        parentName,
+        parentTitle,
+        parentFirstName,
+        parentFamilyName,
         parentBirthday,
         streetAddress,
         suburb,
         state,
         postcode,
-        studentName,
+        studentFirstName,
+        studentFamilyName,
         studentBirthday,
         gender,
         gradeLevel,
@@ -172,8 +179,37 @@ export function ProfileSetupPage() {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <h3>Parent information</h3>
-          <label htmlFor="parent-name">Parent name</label>
-          <input id="parent-name" onChange={(event) => setParentName(event.target.value)} required value={parentName} />
+          <div className="form-grid parent-name-grid">
+            <div>
+              <label htmlFor="parent-title">Title</label>
+              <select id="parent-title" onChange={(event) => setParentTitle(event.target.value)} value={parentTitle}>
+                <option value="">Select title</option>
+                {parentTitleOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="parent-first-name">First name</label>
+              <input
+                id="parent-first-name"
+                onChange={(event) => setParentFirstName(event.target.value)}
+                required
+                value={parentFirstName}
+              />
+            </div>
+            <div>
+              <label htmlFor="parent-family-name">Family name</label>
+              <input
+                id="parent-family-name"
+                onChange={(event) => setParentFamilyName(event.target.value)}
+                required
+                value={parentFamilyName}
+              />
+            </div>
+          </div>
 
           <label htmlFor="parent-birthday">Parent birthday</label>
           <DatePickerField id="parent-birthday" onChange={setParentBirthday} value={parentBirthday} />
@@ -211,8 +247,26 @@ export function ProfileSetupPage() {
           />
 
           <h3>Student information</h3>
-          <label htmlFor="student-name">Student name</label>
-          <input id="student-name" onChange={(event) => setStudentName(event.target.value)} required value={studentName} />
+          <div className="form-grid two-columns">
+            <div>
+              <label htmlFor="student-first-name">First name</label>
+              <input
+                id="student-first-name"
+                onChange={(event) => setStudentFirstName(event.target.value)}
+                required
+                value={studentFirstName}
+              />
+            </div>
+            <div>
+              <label htmlFor="student-family-name">Family name</label>
+              <input
+                id="student-family-name"
+                onChange={(event) => setStudentFamilyName(event.target.value)}
+                required
+                value={studentFamilyName}
+              />
+            </div>
+          </div>
 
           <label htmlFor="student-birthday">Student birthday</label>
           <DatePickerField id="student-birthday" onChange={setStudentBirthday} value={studentBirthday} />
