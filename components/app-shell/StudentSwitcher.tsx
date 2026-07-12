@@ -8,7 +8,11 @@ type StudentOption = {
   displayName: string;
 };
 
-export function StudentSwitcher() {
+type StudentSwitcherProps = {
+  placement?: "topbar" | "sidebar";
+};
+
+export function StudentSwitcher({ placement = "topbar" }: StudentSwitcherProps) {
   const router = useRouter();
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [currentStudentId, setCurrentStudentId] = useState("");
@@ -69,11 +73,17 @@ export function StudentSwitcher() {
   const currentStudent = students.find((student) => student.id === currentStudentId) ?? students[0];
 
   if (students.length === 1) {
-    return <span className="student-name-chip">{currentStudent.displayName}</span>;
+    return (
+      <section className={`student-switcher ${placement}`} aria-label="Current student">
+        {placement === "sidebar" && <span>Current student</span>}
+        <strong>{currentStudent.displayName}</strong>
+      </section>
+    );
   }
 
   return (
-    <section className="topbar-student-switcher" aria-label="Current student">
+    <section className={`student-switcher ${placement}`} aria-label="Current student">
+      {placement === "sidebar" && <span>Current student</span>}
       <select onChange={(event) => switchStudent(event.target.value)} value={currentStudentId}>
         {students.map((student) => (
           <option key={student.id} value={student.id}>
