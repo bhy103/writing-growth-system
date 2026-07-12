@@ -73,17 +73,14 @@ export function UploadReview({
           <p className="eyebrow">Submission details</p>
           <h3>Save uploaded source</h3>
           <p className="panel-note">The original file will be saved securely. Text extraction can be added later.</p>
-          <label htmlFor="upload-title">Title</label>
+          <label htmlFor="upload-title">Title optional</label>
           <input
             id="upload-title"
             onChange={(event) => onUploadTitleChange(event.target.value)}
-            placeholder="Writing title"
+            placeholder="Leave blank to auto-title this upload"
             value={uploadTitle}
           />
-          <div className="review-status ready">
-            <span>Submission type</span>
-            <strong>{methodLabel}</strong>
-          </div>
+          {!uploadedSource && <p className="form-message error">Please choose a source file from New Writing.</p>}
           {uploadSaveMessage && (
             <p className={`form-message ${uploadSaveStatus === "error" ? "error" : "success"}`}>
               {uploadSaveMessage}
@@ -96,7 +93,7 @@ export function UploadReview({
             <button
               className="primary-button"
               data-testid="save-uploaded-source"
-              disabled={uploadSaveStatus === "saving"}
+              disabled={uploadSaveStatus === "saving" || !uploadedSource}
               onClick={onSaveUploadedSource}
               type="button"
             >

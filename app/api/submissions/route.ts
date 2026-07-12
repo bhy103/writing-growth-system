@@ -60,6 +60,27 @@ function getFormValue(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+async function createUntitledSubmissionTitle(prisma: ReturnType<typeof getPrisma>, studentId: string) {
+  const untitledSubmissions = await prisma.writingSubmission.findMany({
+    where: {
+      studentId,
+      title: {
+        startsWith: "Untitled ",
+      },
+    },
+    select: {
+      title: true,
+    },
+  });
+  const usedNumbers = untitledSubmissions
+    .map((submission) => submission.title.match(/^Untitled (\d+)$/i)?.[1])
+    .filter((value): value is string => Boolean(value))
+    .map((value) => Number(value));
+  const nextNumber = usedNumbers.length > 0 ? Math.max(...usedNumbers) + 1 : 1;
+
+  return `Untitled ${String(nextNumber).padStart(2, "0")}`;
+}
+
 async function parseSubmissionRequest(request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
 
@@ -143,17 +164,28 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { content, submissionId, title, upload } = await parseSubmissionRequest(request);
+    const parsedSubmission = await parseSubmissionRequest(request);
+    let { title } = parsedSubmission;
+    const { content, submissionId, upload } = parsedSubmission;
 
-    if (!title || (!content && !upload)) {
+    if (!content && !upload) {
       return NextResponse.json(
-        { message: "Please add a title and English draft, or upload a source file." },
+        { message: "Please add an English draft, or upload a source file." },
         { status: 400 },
       );
     }
 
     const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
+
+    if (!title && upload) {
+      title = await createUntitledSubmissionTitle(prisma, student.id);
+    }
+
+    if (!title) {
+      return NextResponse.json({ message: "Please add a title before saving this draft." }, { status: 400 });
+    }
+
     const ownedSubmission = submissionId
       ? await prisma.writingSubmission.findFirst({
           where: {

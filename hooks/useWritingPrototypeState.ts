@@ -29,9 +29,14 @@ function getInitialSnapshot() {
   return loadPrototypeSnapshot();
 }
 
-function getTitleFromUploadedFile(fileName: string) {
-  const withoutExtension = fileName.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
-  return withoutExtension || "Uploaded Writing";
+function getNextLocalUntitledTitle(history: PrototypeSnapshot["history"]) {
+  const usedNumbers = history
+    .map((item) => item.title.match(/^Untitled (\d+)$/i)?.[1])
+    .filter((value): value is string => Boolean(value))
+    .map((value) => Number(value));
+  const nextNumber = usedNumbers.length > 0 ? Math.max(...usedNumbers) + 1 : 1;
+
+  return `Untitled ${String(nextNumber).padStart(2, "0")}`;
 }
 
 async function readJsonResponse(response: Response) {
@@ -235,27 +240,27 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   function openUpload(method: UploadMethod, file: File) {
     setUploadMethod(method);
     setUploadedSource({ method, file });
-    setUploadTitle(getTitleFromUploadedFile(file.name));
+    setUploadTitle("");
     setUploadSaveStatus("idle");
     setUploadSaveMessage("");
     setView("upload-review");
-    router.push(viewRoutes["upload-review"]);
   }
 
   async function saveUploadedSource() {
     if (!uploadedSource) {
       setUploadSaveStatus("error");
-      setUploadSaveMessage("Please choose a source file first.");
+      setUploadSaveMessage("Please choose a source file from New Writing.");
       return;
     }
 
-    const nextTitle = uploadTitle.trim() || getTitleFromUploadedFile(uploadedSource.file.name);
+    const fallbackTitle = getNextLocalUntitledTitle(snapshot.history);
+    const requestedTitle = uploadTitle.trim();
     setUploadSaveStatus("saving");
     setUploadSaveMessage("");
 
     try {
       const formData = new FormData();
-      formData.set("title", nextTitle);
+      formData.set("title", requestedTitle);
       formData.set("content", "");
       formData.set("uploadMethod", uploadedSource.method);
       formData.set("extractedText", "");
@@ -272,16 +277,17 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
       }
 
       const savedSubmissionId = result.submission.id;
+      const savedTitle = typeof result.submission.title === "string" ? result.submission.title : requestedTitle || fallbackTitle;
       setCurrentSubmissionId(savedSubmissionId);
       setUploadSaveStatus("saved");
       setUploadSaveMessage("Upload saved.");
 
       const nextSnapshot = {
         ...snapshot,
-        title: nextTitle,
+        title: savedTitle,
         draft: "",
         history: [
-          { id: savedSubmissionId, title: nextTitle, status: "Draft", focus: "Source uploaded" },
+          { id: savedSubmissionId, title: savedTitle, status: "Draft", focus: "Source uploaded" },
           ...snapshot.history.filter((item) => item.id !== savedSubmissionId),
         ],
       };
