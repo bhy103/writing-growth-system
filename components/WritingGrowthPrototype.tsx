@@ -73,7 +73,7 @@ export function WritingGrowthPrototype({ initialView = "dashboard" }: WritingGro
       )}
 
       {prototype.view === "history" && (
-        <WritingHistory history={prototype.history} onOpenReport={prototype.openSavedReport} />
+        <WritingHistory history={prototype.history} />
       )}
 
       {prototype.view === "parent" && (

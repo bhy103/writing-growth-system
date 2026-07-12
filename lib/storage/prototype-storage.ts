@@ -1,6 +1,7 @@
 import { initialDraft, initialHistory } from "@/lib/mock/mock-data";
 
 export type PrototypeHistoryItem = {
+  id?: string;
   title: string;
   status: string;
   focus: string;
@@ -27,6 +28,7 @@ function isHistoryItem(value: unknown): value is PrototypeHistoryItem {
 
   const item = value as Record<string, unknown>;
   return (
+    (item.id === undefined || typeof item.id === "string") &&
     typeof item.title === "string" &&
     typeof item.status === "string" &&
     typeof item.focus === "string"

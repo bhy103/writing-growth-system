@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 type HistoryItem = {
+  id?: string;
   title: string;
   status: string;
   focus: string;
@@ -8,7 +9,6 @@ type HistoryItem = {
 
 type WritingHistoryProps = {
   history: HistoryItem[];
-  onOpenReport: () => void;
 };
 
 export function WritingHistory({ history }: WritingHistoryProps) {
@@ -24,11 +24,11 @@ export function WritingHistory({ history }: WritingHistoryProps) {
             <span>Action</span>
           </div>
           {history.map((item, index) => (
-            <div className="history-row" key={`${item.title}-${index}`}>
+            <div className="history-row" key={item.id ?? `${item.title}-${index}`}>
               <span>{item.title}</span>
               <strong>{item.status}</strong>
               <span>{item.focus}</span>
-              <Link className="small-button" href="/workspace/report">
+              <Link className="small-button" href={item.id ? `/workspace/history/${item.id}` : "/workspace/report"}>
                 Open
               </Link>
             </div>

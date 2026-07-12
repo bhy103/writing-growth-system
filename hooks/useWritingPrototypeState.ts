@@ -98,7 +98,8 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
 
       setSnapshot((currentSnapshot) => ({
         ...currentSnapshot,
-        history: result.submissions.map((submission: { title: string; status: string; focus: string }) => ({
+        history: result.submissions.map((submission: { id: string; title: string; status: string; focus: string }) => ({
+          id: submission.id,
           title: submission.title,
           status: titleCaseStatus(submission.status),
           focus: submission.focus,
@@ -185,6 +186,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   async function saveDraft() {
     setDraftSaveStatus("saving");
     setDraftSaveMessage("");
+    let savedSubmissionId = "";
 
     try {
       const response = await fetch("/api/submissions", {
@@ -206,7 +208,8 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
 
       setDraftSaveStatus("saved");
       setDraftSaveMessage("Saved to workspace history.");
-      setCurrentSubmissionId(result.submission.id);
+      savedSubmissionId = result.submission.id;
+      setCurrentSubmissionId(savedSubmissionId);
     } catch (error) {
       setDraftSaveStatus("error");
       setDraftSaveMessage(error instanceof Error ? error.message : "Unable to save this draft.");
@@ -215,7 +218,10 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
 
     const nextSnapshot = {
       ...snapshot,
-      history: [{ title: snapshot.title, status: "Draft", focus: "Not analyzed" }, ...snapshot.history],
+      history: [
+        { id: savedSubmissionId, title: snapshot.title, status: "Draft", focus: "Not analyzed" },
+        ...snapshot.history,
+      ],
     };
     setSnapshot(nextSnapshot);
     savePrototypeSnapshot(nextSnapshot);
@@ -226,6 +232,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   async function saveRevision() {
     setRevisionSaveStatus("saving");
     setRevisionSaveMessage("");
+    let savedSubmissionId = "";
 
     try {
       const response = await fetch("/api/revisions", {
@@ -247,7 +254,8 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
         throw new Error(result.message ?? "Unable to save this revision.");
       }
 
-      setCurrentSubmissionId(result.submissionId);
+      savedSubmissionId = result.submissionId;
+      setCurrentSubmissionId(savedSubmissionId);
       setRevisionSaveStatus("saved");
       setRevisionSaveMessage("Revision saved.");
     } catch (error) {
@@ -259,7 +267,10 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     const nextSnapshot = {
       ...snapshot,
       draft: revisionDraft,
-      history: [{ title: snapshot.title, status: "Completed", focus: report.weakest.name }, ...snapshot.history],
+      history: [
+        { id: savedSubmissionId, title: snapshot.title, status: "Completed", focus: report.weakest.name },
+        ...snapshot.history,
+      ],
     };
     setSnapshot(nextSnapshot);
     savePrototypeSnapshot(nextSnapshot);
