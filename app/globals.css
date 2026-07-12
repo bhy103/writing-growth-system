@@ -506,6 +506,24 @@ a {
   justify-content: center;
 }
 
+.password-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.password-strength {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.password-strength.strong {
+  color: var(--green);
+}
+
 .auth-footnote {
   margin: 4px 0 0;
   color: var(--muted);
