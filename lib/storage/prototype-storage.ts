@@ -12,7 +12,7 @@ export type PrototypeSnapshot = {
   history: PrototypeHistoryItem[];
 };
 
-const storageKey = "writing-growth-system.prototype.v1";
+export const storageKey = "writing-growth-system.prototype.v1";
 
 export const defaultPrototypeSnapshot: PrototypeSnapshot = {
   title: initialDraft.title,

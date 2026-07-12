@@ -21,9 +21,20 @@ export async function POST(request: Request) {
 
     const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
-    const submission = submissionId
+    const ownedSubmission = submissionId
+      ? await prisma.writingSubmission.findFirst({
+          where: { id: submissionId, studentId: student.id },
+          select: { id: true },
+        })
+      : null;
+
+    if (submissionId && !ownedSubmission) {
+      return NextResponse.json({ message: "This writing submission does not belong to the current student." }, { status: 403 });
+    }
+
+    const submission = ownedSubmission
       ? await prisma.writingSubmission.update({
-          where: { id: submissionId },
+          where: { id: ownedSubmission.id },
           data: { status: "COMPLETED" },
           select: { id: true },
         })

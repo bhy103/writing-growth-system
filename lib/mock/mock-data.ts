@@ -1,7 +1,6 @@
 export const initialDraft = {
-  title: "A Memorable Day",
-  content:
-    "Last Friday, my class went to the science museum. I felt excited because I wanted to see the space room. First, we watched a short movie about planets. Then my friend and I tried a machine that showed how astronauts move. I was nervous, but I also felt happy. It was a day I will remember.",
+  title: "",
+  content: "",
 };
 
 export const sampleExtractedText = {
@@ -19,15 +18,4 @@ export const extractionMeta = {
   document: { confidence: "96%", state: "Ready to confirm" },
 };
 
-export const initialHistory = [
-  {
-    title: "A Memorable Day",
-    status: "Analyzed",
-    focus: "Sentence Fluency",
-  },
-  {
-    title: "My Favorite Book",
-    status: "Draft",
-    focus: "Ideas",
-  },
-];
+export const initialHistory = [];

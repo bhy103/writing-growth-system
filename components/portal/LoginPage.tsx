@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { storageKey } from "@/lib/storage/prototype-storage";
 
 export function LoginPage() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export function LoginPage() {
       return;
     }
 
+    window.localStorage.removeItem(storageKey);
     router.push("/workspace");
   }
 
