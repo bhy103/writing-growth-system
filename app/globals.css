@@ -628,6 +628,16 @@ a {
   flex-wrap: wrap;
 }
 
+.user-chip {
+  max-width: 220px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .primary-button,
 .secondary-button,
 .small-button,

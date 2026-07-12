@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api/error-response";
-import { getDemoStudentProfile } from "@/lib/db/demo-user";
+import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import { createMockReport } from "@/lib/mock/mock-analysis";
 
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const student = await getDemoStudentProfile();
+    const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
     const report = createMockReport({ title, draft: content });
 

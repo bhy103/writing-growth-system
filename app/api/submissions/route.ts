@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api/error-response";
-import { getDemoStudentProfile } from "@/lib/db/demo-user";
+import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 
 export async function GET() {
   try {
-    const student = await getDemoStudentProfile();
+    const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
     const submissions = await prisma.writingSubmission.findMany({
       where: {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const student = await getDemoStudentProfile();
+    const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
     const submission = await prisma.writingSubmission.create({
       data: {

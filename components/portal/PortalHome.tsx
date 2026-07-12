@@ -37,7 +37,7 @@ export function PortalHome() {
           <a href="#preview">Preview</a>
         </nav>
         <div className="portal-actions">
-          <Link className="secondary-button" href="/workspace">
+          <Link className="secondary-button" href="/login">
             Login
           </Link>
           <Link className="primary-button" href="/register">
@@ -55,7 +55,7 @@ export function PortalHome() {
             revision practice, and progress tracking.
           </p>
           <div className="portal-cta-row">
-            <Link className="primary-button large" href="/workspace">
+            <Link className="primary-button large" href="/login">
               Login
             </Link>
             <Link className="secondary-button large" href="/register">
