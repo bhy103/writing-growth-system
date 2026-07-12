@@ -20,6 +20,7 @@ import { type View, viewRoutes } from "@/lib/workflow/writing-flow";
 
 export type AnalysisStatus = "idle" | "analyzing" | "error" | "ready";
 export type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
+export type RevisionSaveStatus = "idle" | "saving" | "saved" | "error";
 
 function getInitialSnapshot() {
   if (typeof window === "undefined") {
@@ -42,6 +43,10 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   const [lowConfidence, setLowConfidence] = useState(false);
   const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
   const [draftSaveMessage, setDraftSaveMessage] = useState("");
+  const [revisionDraft, setRevisionDraft] = useState("");
+  const [revisionSaveStatus, setRevisionSaveStatus] = useState<RevisionSaveStatus>("idle");
+  const [revisionSaveMessage, setRevisionSaveMessage] = useState("");
+  const [currentSubmissionId, setCurrentSubmissionId] = useState<string | null>(null);
   const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>(
     initialView === "report" ? "ready" : "idle",
   );
@@ -132,6 +137,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
       }
 
       setReport(result.report);
+      setCurrentSubmissionId(result.submissionId);
       setAnalysisStatus("ready");
     } catch {
       setAnalysisStatus("error");
@@ -184,6 +190,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
 
       setDraftSaveStatus("saved");
       setDraftSaveMessage("Saved to workspace history.");
+      setCurrentSubmissionId(result.submission.id);
     } catch (error) {
       setDraftSaveStatus("error");
       setDraftSaveMessage(error instanceof Error ? error.message : "Unable to save this draft.");
@@ -200,10 +207,43 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     router.push(viewRoutes.history);
   }
 
-  function saveRevision() {
+  async function saveRevision() {
+    setRevisionSaveStatus("saving");
+    setRevisionSaveMessage("");
+
+    try {
+      const response = await fetch("/api/revisions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          submissionId: currentSubmissionId,
+          title: snapshot.title,
+          originalContent: snapshot.draft,
+          revisedContent: revisionDraft,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Unable to save this revision.");
+      }
+
+      setCurrentSubmissionId(result.submissionId);
+      setRevisionSaveStatus("saved");
+      setRevisionSaveMessage("Revision saved.");
+    } catch (error) {
+      setRevisionSaveStatus("error");
+      setRevisionSaveMessage(error instanceof Error ? error.message : "Unable to save this revision.");
+      return;
+    }
+
     const nextSnapshot = {
       ...snapshot,
-      history: [{ title: snapshot.title, status: "Revised", focus: report.weakest.name }, ...snapshot.history],
+      draft: revisionDraft,
+      history: [{ title: snapshot.title, status: "Completed", focus: report.weakest.name }, ...snapshot.history],
     };
     setSnapshot(nextSnapshot);
     savePrototypeSnapshot(nextSnapshot);
@@ -212,6 +252,9 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   }
 
   function openRevision() {
+    setRevisionDraft((currentRevision) => currentRevision || snapshot.draft);
+    setRevisionSaveStatus("idle");
+    setRevisionSaveMessage("");
     setView("revision");
     router.push(viewRoutes.revision);
   }
@@ -253,6 +296,10 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     history: snapshot.history,
     draftSaveStatus,
     draftSaveMessage,
+    revisionDraft,
+    setRevisionDraft,
+    revisionSaveStatus,
+    revisionSaveMessage,
     report,
     uploadMethod,
     uploadedSource,

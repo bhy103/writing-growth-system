@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { type MockReport } from "@/lib/mock/mock-analysis";
 
 type AiWritingReportProps = {
@@ -8,7 +7,7 @@ type AiWritingReportProps = {
   onStartRevision: () => void;
 };
 
-export function AiWritingReport({ report, analysisStatus, onRetry }: AiWritingReportProps) {
+export function AiWritingReport({ report, analysisStatus, onRetry, onStartRevision }: AiWritingReportProps) {
   return (
     <section className="view active-view" data-testid="view-report">
       {(analysisStatus === "analyzing" || analysisStatus === "error") && (
@@ -35,9 +34,9 @@ export function AiWritingReport({ report, analysisStatus, onRetry }: AiWritingRe
           <h2>{report.title}</h2>
           <p>{report.overall}</p>
         </div>
-        <Link className="primary-button" href="/workspace/revision">
+        <button className="primary-button" onClick={onStartRevision} type="button">
           Start Revision
-        </Link>
+        </button>
       </div>
       <div className="rubric-grid" data-testid="rubric-grid">
         {report.dimensions.map((dimension) => (

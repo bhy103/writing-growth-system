@@ -62,7 +62,14 @@ export function WritingGrowthPrototype({ initialView = "dashboard" }: WritingGro
       )}
 
       {prototype.view === "revision" && (
-        <RevisionWorkspace draft={prototype.draft} onSaveRevision={prototype.saveRevision} />
+        <RevisionWorkspace
+          draft={prototype.draft}
+          revisedDraft={prototype.revisionDraft}
+          saveStatus={prototype.revisionSaveStatus}
+          saveMessage={prototype.revisionSaveMessage}
+          onRevisedDraftChange={prototype.setRevisionDraft}
+          onSaveRevision={prototype.saveRevision}
+        />
       )}
 
       {prototype.view === "history" && (
