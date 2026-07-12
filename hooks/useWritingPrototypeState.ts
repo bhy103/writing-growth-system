@@ -280,7 +280,11 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
       const savedTitle = typeof result.submission.title === "string" ? result.submission.title : requestedTitle || fallbackTitle;
       setCurrentSubmissionId(savedSubmissionId);
       setUploadSaveStatus("saved");
-      setUploadSaveMessage("Upload saved.");
+      setUploadSaveMessage(
+        typeof result.uploadWarning === "string"
+          ? "Writing record saved. Original file storage still needs configuration."
+          : "Upload saved.",
+      );
 
       const nextSnapshot = {
         ...snapshot,

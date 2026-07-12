@@ -62,6 +62,7 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
   const analysis = submission.analysis;
   const sourceUpload = submission.uploads[0];
   const hasStoredSourceFile = sourceUpload && !sourceUpload.storagePath.startsWith("pending-storage/");
+  const hasPendingSourceFile = sourceUpload && sourceUpload.storagePath.startsWith("pending-storage/");
 
   return (
     <AppShell activeView="history">
@@ -134,6 +135,12 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
                       Open source file
                     </Link>
                   </dd>
+                </div>
+              )}
+              {hasPendingSourceFile && (
+                <div>
+                  <dt>Original file</dt>
+                  <dd>File storage pending. Please check Supabase Storage settings.</dd>
                 </div>
               )}
             </dl>

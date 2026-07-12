@@ -202,17 +202,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "This writing submission does not belong to the current student." }, { status: 403 });
     }
 
-    const storagePath = upload
-      ? isObjectStorageConfigured()
-        ? buildStoredUploadPath({ fileName: upload.fileName, studentId: student.id })
-        : buildPendingStoragePath({ fileName: upload.fileName, studentId: student.id })
-      : "";
-    const storedUpload = upload?.file
-      ? await uploadFileToConfiguredStorage({
-          file: upload.file,
-          storagePath,
-        })
-      : null;
+    let uploadStorageWarning = "";
+    let storagePath = upload ? buildPendingStoragePath({ fileName: upload.fileName, studentId: student.id }) : "";
+
+    if (upload && isObjectStorageConfigured()) {
+      const storedStoragePath = buildStoredUploadPath({ fileName: upload.fileName, studentId: student.id });
+
+      try {
+        const storedUpload = upload.file
+          ? await uploadFileToConfiguredStorage({
+              file: upload.file,
+              storagePath: storedStoragePath,
+            })
+          : null;
+
+        storagePath = storedUpload?.storagePath ?? storedStoragePath;
+      } catch (error) {
+        uploadStorageWarning =
+          error instanceof Error
+            ? error.message
+            : "The writing record was saved, but the original file could not be stored.";
+      }
+    }
 
     const submission = ownedSubmission
       ? await prisma.writingSubmission.update({
@@ -244,7 +255,7 @@ export async function POST(request: Request) {
                     fileName: upload.fileName,
                     fileType: upload.fileType,
                     fileSize: upload.fileSize,
-                    storagePath: storedUpload?.storagePath ?? storagePath,
+                    storagePath,
                     extractionConfidence: upload.extractionConfidence,
                     extractedText: upload.extractedText || content,
                   },
@@ -259,7 +270,10 @@ export async function POST(request: Request) {
           },
         });
 
-    return NextResponse.json({ submission });
+    return NextResponse.json({
+      submission,
+      uploadWarning: uploadStorageWarning || undefined,
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }
