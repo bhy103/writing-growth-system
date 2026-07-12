@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import { getPasswordIssues, isStrongPassword } from "@/lib/auth/password-policy";
+import { isStrongPassword } from "@/lib/auth/password-policy";
 import { storageKey } from "@/lib/storage/prototype-storage";
 
 export function RegisterPage() {
@@ -15,9 +15,9 @@ export function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const passwordIssues = getPasswordIssues(password);
   const passwordsMatch = password === confirmPassword;
-  const canSubmit = isStrongPassword(password) && passwordsMatch && Boolean(email);
+  const passwordIsStrong = isStrongPassword(password);
+  const canSubmit = passwordIsStrong && passwordsMatch && Boolean(email.trim());
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -110,12 +110,17 @@ export function RegisterPage() {
             </button>
           </div>
 
-          <div className={`password-strength ${password && passwordIssues.length === 0 ? "strong" : ""}`}>
-            <strong>{passwordIssues.length === 0 && password ? "Strong password" : "Password must include:"}</strong>
-            {passwordIssues.length > 0 && (
+          <div className="password-strength">
+            <strong className={passwordIsStrong && password ? "success" : ""}>
+              {passwordIsStrong && password ? "Strong password" : "Password must include:"}
+            </strong>
+            {!passwordIsStrong && (
               <span>8+ characters, uppercase, lowercase, number, and symbol.</span>
             )}
-            {confirmPassword && !passwordsMatch && <span>Passwords do not match.</span>}
+            {confirmPassword && !passwordsMatch && <span className="error">Passwords do not match.</span>}
+            {confirmPassword && passwordsMatch && passwordIsStrong && (
+              <span className="success">Passwords match. You can create the account.</span>
+            )}
           </div>
 
           <button className="primary-button large" disabled={isSubmitting || !canSubmit} type="submit">

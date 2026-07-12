@@ -550,8 +550,12 @@ a {
   line-height: 1.45;
 }
 
-.password-strength.strong {
+.password-strength .success {
   color: var(--green);
+}
+
+.password-strength .error {
+  color: var(--red);
 }
 
 .auth-footnote {
