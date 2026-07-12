@@ -30,6 +30,16 @@ function getInitialSnapshot() {
   return loadPrototypeSnapshot();
 }
 
+function getTitleFromUploadedFile(fileName: string) {
+  const withoutExtension = fileName.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
+  return withoutExtension || "Uploaded Writing";
+}
+
+function parseConfidencePercent(confidence: string) {
+  const parsed = Number(confidence.replace("%", ""));
+  return Number.isFinite(parsed) ? parsed / 100 : null;
+}
+
 async function readJsonResponse(response: Response) {
   const text = await response.text();
 
@@ -237,12 +247,50 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     router.push(viewRoutes["upload-review"]);
   }
 
-  function confirmUploadedText(text: string) {
-    const nextSnapshot = { ...snapshot, draft: text };
+  async function confirmUploadedText(text: string) {
+    const nextTitle = snapshot.title || (uploadedSource ? getTitleFromUploadedFile(uploadedSource.file.name) : "Uploaded Writing");
+    const nextSnapshot = { ...snapshot, title: nextTitle, draft: text };
+    let savedSubmissionId = "";
+
+    if (uploadedSource) {
+      try {
+        const response = await fetch("/api/submissions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: nextTitle,
+            content: text,
+            upload: {
+              method: uploadedSource.method,
+              fileName: uploadedSource.file.name,
+              fileType: uploadedSource.file.type,
+              fileSize: uploadedSource.file.size,
+              extractionConfidence: parseConfidencePercent(currentMeta.confidence),
+              extractedText: text,
+            },
+          }),
+        });
+        const result = await readJsonResponse(response);
+
+        if (response.ok && typeof result.submission?.id === "string") {
+          savedSubmissionId = result.submission.id;
+          setCurrentSubmissionId(savedSubmissionId);
+          nextSnapshot.history = [
+            { id: savedSubmissionId, title: nextTitle, status: "Draft", focus: "Not analyzed" },
+            ...nextSnapshot.history,
+          ];
+        }
+      } catch {
+        // Keep the student moving even if upload metadata cannot be saved yet.
+      }
+    }
+
     setSnapshot(nextSnapshot);
     savePrototypeSnapshot(nextSnapshot);
     setView("new-writing");
-    router.push(viewRoutes["new-writing"]);
+    router.push(savedSubmissionId ? `${viewRoutes["new-writing"]}?submissionId=${savedSubmissionId}` : viewRoutes["new-writing"]);
   }
 
   async function saveDraft() {
@@ -257,6 +305,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          submissionId: currentSubmissionId,
           title: snapshot.title,
           content: snapshot.draft,
         }),
@@ -282,7 +331,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
       ...snapshot,
       history: [
         { id: savedSubmissionId, title: snapshot.title, status: "Draft", focus: "Not analyzed" },
-        ...snapshot.history,
+        ...snapshot.history.filter((item) => item.id !== savedSubmissionId),
       ],
     };
     setSnapshot(nextSnapshot);

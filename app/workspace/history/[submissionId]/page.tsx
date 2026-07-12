@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell/AppShell";
 import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
+import { formatFileSize } from "@/lib/upload/upload-source";
 
 type WritingDetailPageProps = {
   params: Promise<{
@@ -40,6 +41,12 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
     },
     include: {
       analysis: true,
+      uploads: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 1,
+      },
       revisions: {
         orderBy: {
           createdAt: "desc",
@@ -53,6 +60,7 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
   }
 
   const analysis = submission.analysis;
+  const sourceUpload = submission.uploads[0];
 
   return (
     <AppShell activeView="history">
@@ -105,6 +113,18 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
                 <dt>Level</dt>
                 <dd>{analysis?.overallLevel ?? "Pending"}</dd>
               </div>
+              <div>
+                <dt>Source</dt>
+                <dd>{sourceUpload ? sourceUpload.fileName : "Typed text"}</dd>
+              </div>
+              {sourceUpload && (
+                <div>
+                  <dt>File details</dt>
+                  <dd>
+                    {sourceUpload.fileType} {sourceUpload.fileSize ? `- ${formatFileSize(sourceUpload.fileSize)}` : ""}
+                  </dd>
+                </div>
+              )}
             </dl>
           </aside>
         </div>

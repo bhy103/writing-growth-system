@@ -77,6 +77,12 @@ export async function GET(_request: Request, { params }: SubmissionDetailRoutePr
       },
       include: {
         analysis: true,
+        uploads: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+        },
         revisions: {
           orderBy: {
             createdAt: "desc",
@@ -98,6 +104,14 @@ export async function GET(_request: Request, { params }: SubmissionDetailRoutePr
         status: submission.status,
         focus: submission.analysis?.focusDimension ?? "Not analyzed",
         latestRevision: submission.revisions[0]?.content ?? "",
+        upload: submission.uploads[0]
+          ? {
+              fileName: submission.uploads[0].fileName,
+              fileType: submission.uploads[0].fileType,
+              fileSize: submission.uploads[0].fileSize,
+              extractionConfidence: submission.uploads[0].extractionConfidence,
+            }
+          : null,
         report: buildReport(submission),
       },
     });
