@@ -30,6 +30,22 @@ function getInitialSnapshot() {
   return loadPrototypeSnapshot();
 }
 
+async function readJsonResponse(response: Response) {
+  const text = await response.text();
+
+  if (!text) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      message: "Server returned an unreadable response. Please check deployment logs.",
+    };
+  }
+}
+
 export function useWritingPrototypeState(initialView: View = "dashboard") {
   const router = useRouter();
   const [view, setView] = useState<View>(initialView);
@@ -74,7 +90,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
         return;
       }
 
-      const result = await response.json();
+      const result = await readJsonResponse(response);
 
       if (cancelled || !Array.isArray(result.submissions)) {
         return;
@@ -182,7 +198,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
         }),
       });
 
-      const result = await response.json();
+      const result = await readJsonResponse(response);
 
       if (!response.ok) {
         throw new Error(result.message ?? "Unable to save this draft.");
@@ -225,7 +241,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
         }),
       });
 
-      const result = await response.json();
+      const result = await readJsonResponse(response);
 
       if (!response.ok) {
         throw new Error(result.message ?? "Unable to save this revision.");
