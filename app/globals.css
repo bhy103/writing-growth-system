@@ -1515,6 +1515,20 @@ blockquote {
   line-height: 1;
 }
 
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.detail-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .back-link {
   color: var(--green);
   font-size: 14px;
@@ -1674,6 +1688,14 @@ blockquote {
   .detail-grid,
   .report-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .detail-header {
+    display: grid;
+  }
+
+  .detail-actions {
+    justify-content: flex-start;
   }
 
   .sidebar {

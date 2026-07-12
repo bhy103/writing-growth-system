@@ -77,6 +77,58 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
   }, [snapshot]);
 
   useEffect(() => {
+    if (typeof window === "undefined" || (initialView !== "new-writing" && initialView !== "revision")) {
+      return;
+    }
+
+    const submissionId = new URLSearchParams(window.location.search).get("submissionId");
+
+    if (!submissionId || submissionId === currentSubmissionId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadSubmission() {
+      const response = await fetch(`/api/submissions/${submissionId}`);
+
+      if (!response.ok) {
+        return;
+      }
+
+      const result = await readJsonResponse(response);
+      const submission = result.submission;
+
+      if (
+        cancelled ||
+        !submission ||
+        typeof submission.id !== "string" ||
+        typeof submission.title !== "string" ||
+        typeof submission.content !== "string"
+      ) {
+        return;
+      }
+
+      setCurrentSubmissionId(submission.id);
+      setSnapshot((currentSnapshot) => ({
+        ...currentSnapshot,
+        title: submission.title,
+        draft: submission.content,
+      }));
+
+      if (initialView === "revision" && typeof submission.latestRevision === "string") {
+        setRevisionDraft(submission.latestRevision || "");
+      }
+    }
+
+    loadSubmission();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSubmissionId, initialView]);
+
+  useEffect(() => {
     if (view !== "history") {
       return;
     }
@@ -142,6 +194,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          submissionId: currentSubmissionId,
           title: snapshot.title,
           content: snapshot.draft,
         }),

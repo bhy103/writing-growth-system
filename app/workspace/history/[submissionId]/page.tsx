@@ -65,6 +65,14 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
               <span>{formatDate(submission.createdAt)}</span>
             </div>
           </div>
+          <div className="detail-actions">
+            <Link className="secondary-button" href={`/workspace/new-writing?submissionId=${submission.id}`}>
+              {analysis ? "Analyze again" : "Analyze this writing"}
+            </Link>
+            <Link className="primary-button" href={`/workspace/revision?submissionId=${submission.id}`}>
+              Revise this writing
+            </Link>
+          </div>
         </div>
 
         <div className="detail-grid">
@@ -117,7 +125,7 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
           <section className="panel detail-section">
             <p className="section-eyebrow">AI Writing Report</p>
             <p className="detail-copy">This draft has not been analyzed yet.</p>
-            <Link className="primary-button detail-action" href="/workspace/new-writing">
+            <Link className="primary-button detail-action" href={`/workspace/new-writing?submissionId=${submission.id}`}>
               Analyze from writing workspace
             </Link>
           </section>

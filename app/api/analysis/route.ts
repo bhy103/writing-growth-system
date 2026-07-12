@@ -10,6 +10,7 @@ export async function POST(request: Request) {
 
     const title = typeof body?.title === "string" ? body.title.trim() : "";
     const content = typeof body?.content === "string" ? body.content.trim() : "";
+    const submissionId = typeof body?.submissionId === "string" ? body.submissionId : "";
 
     if (!title || !content) {
       return NextResponse.json(
@@ -21,30 +22,67 @@ export async function POST(request: Request) {
     const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
     const report = createMockReport({ title, draft: content });
+    const analysisData = {
+      overallLevel: report.overall,
+      focusDimension: report.focus,
+      strongestDimension: report.strongest.name,
+      weakestDimension: report.weakest.name,
+      rubricJson: report.dimensions,
+      studentFeedback: report.weakest.note,
+      parentSummaryZh: null,
+    };
 
-    const submission = await prisma.writingSubmission.create({
-      data: {
-        studentId: student.id,
-        title,
-        content,
-        sourceType: "TYPED_TEXT",
-        status: "ANALYZED",
-        analysis: {
-          create: {
-            overallLevel: report.overall,
-            focusDimension: report.focus,
-            strongestDimension: report.strongest.name,
-            weakestDimension: report.weakest.name,
-            rubricJson: report.dimensions,
-            studentFeedback: report.weakest.note,
-            parentSummaryZh: null,
+    const ownedSubmission = submissionId
+      ? await prisma.writingSubmission.findFirst({
+          where: {
+            id: submissionId,
+            studentId: student.id,
           },
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
+          select: {
+            id: true,
+          },
+        })
+      : null;
+
+    if (submissionId && !ownedSubmission) {
+      return NextResponse.json({ message: "This writing submission does not belong to the current student." }, { status: 403 });
+    }
+
+    const submission = ownedSubmission
+      ? await prisma.writingSubmission.update({
+          where: {
+            id: ownedSubmission.id,
+          },
+          data: {
+            title,
+            content,
+            status: "ANALYZED",
+            analysis: {
+              upsert: {
+                create: analysisData,
+                update: analysisData,
+              },
+            },
+          },
+          select: {
+            id: true,
+          },
+        })
+      : await prisma.writingSubmission.create({
+          data: {
+            studentId: student.id,
+            title,
+            content,
+            sourceType: "TYPED_TEXT",
+            status: "ANALYZED",
+            analysis: {
+              create: analysisData,
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
 
     return NextResponse.json({
       submissionId: submission.id,
