@@ -7,6 +7,26 @@ export type WritingDimension = {
   note: string;
 };
 
+export type HighlightSentence = {
+  text: string;
+  reason: string;
+  relatedDimension: string;
+};
+
+export type RevisionSuggestion = {
+  priority: number;
+  target: string;
+  suggestion: string;
+  prompt: string;
+};
+
+export type NextExercise = {
+  title: string;
+  instruction: string;
+  minutes: number;
+  difficulty: string;
+};
+
 export type MockReport = {
   title: string;
   overall: string;
@@ -14,6 +34,9 @@ export type MockReport = {
   strongest: WritingDimension;
   weakest: WritingDimension;
   dimensions: WritingDimension[];
+  highlightSentences: HighlightSentence[];
+  revisionSuggestions: RevisionSuggestion[];
+  nextExercises: NextExercise[];
 };
 
 export function getWordCount(text: string) {
@@ -93,6 +116,7 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
 
   const strongest = [...dimensions].sort((a, b) => b.score - a.score)[0];
   const weakest = [...dimensions].sort((a, b) => a.score - b.score)[0];
+  const firstSentence = draft.split(/[.!?]+/).map((item) => item.trim()).filter(Boolean)[0] ?? "";
 
   return {
     title,
@@ -104,6 +128,31 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
     strongest,
     weakest,
     dimensions,
+    highlightSentences: firstSentence
+      ? [
+          {
+            text: firstSentence,
+            reason: "This sentence gives the reader a clear starting point.",
+            relatedDimension: strongest.name,
+          },
+        ]
+      : [],
+    revisionSuggestions: [
+      {
+        priority: 1,
+        target: weakest.name,
+        suggestion: weakest.note,
+        prompt: "Choose one sentence and improve only this skill. Keep the idea in your own words.",
+      },
+    ],
+    nextExercises: [
+      {
+        title: `Practice ${weakest.name}`,
+        instruction: "Revise one sentence from your draft using today's focus skill.",
+        minutes: 8,
+        difficulty: "easy",
+      },
+    ],
   };
 }
 

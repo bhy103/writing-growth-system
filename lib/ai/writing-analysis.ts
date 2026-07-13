@@ -21,6 +21,9 @@ type RawAiReport = {
   strongest?: RawAiDimension;
   weakest?: RawAiDimension;
   dimensions?: RawAiDimension[];
+  highlightSentences?: unknown;
+  revisionSuggestions?: unknown;
+  nextExercises?: unknown;
   parentSummaryZh?: unknown;
 };
 
@@ -45,7 +48,17 @@ const zhDimensionNames: Record<string, string> = {
 const analysisSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["overall", "focus", "strongest", "weakest", "dimensions", "parentSummaryZh"],
+  required: [
+    "overall",
+    "focus",
+    "strongest",
+    "weakest",
+    "dimensions",
+    "highlightSentences",
+    "revisionSuggestions",
+    "nextExercises",
+    "parentSummaryZh",
+  ],
   properties: {
     overall: {
       type: "string",
@@ -62,6 +75,24 @@ const analysisSchema = {
       minItems: 6,
       maxItems: 6,
       items: { $ref: "#/$defs/dimension" },
+    },
+    highlightSentences: {
+      type: "array",
+      minItems: 1,
+      maxItems: 2,
+      items: { $ref: "#/$defs/highlightSentence" },
+    },
+    revisionSuggestions: {
+      type: "array",
+      minItems: 1,
+      maxItems: 3,
+      items: { $ref: "#/$defs/revisionSuggestion" },
+    },
+    nextExercises: {
+      type: "array",
+      minItems: 1,
+      maxItems: 2,
+      items: { $ref: "#/$defs/nextExercise" },
     },
     parentSummaryZh: {
       type: "string",
@@ -97,6 +128,71 @@ const analysisSchema = {
         note: {
           type: "string",
           description: "One actionable, child-friendly English note. Do not write the sentence for the child.",
+        },
+      },
+    },
+    highlightSentence: {
+      type: "object",
+      additionalProperties: false,
+      required: ["text", "reason", "relatedDimension"],
+      properties: {
+        text: {
+          type: "string",
+          description: "One short exact sentence or phrase from the student's draft.",
+        },
+        reason: {
+          type: "string",
+          description: "Why this part works well, in child-friendly English.",
+        },
+        relatedDimension: {
+          type: "string",
+          enum: dimensionNames,
+        },
+      },
+    },
+    revisionSuggestion: {
+      type: "object",
+      additionalProperties: false,
+      required: ["priority", "target", "suggestion", "prompt"],
+      properties: {
+        priority: {
+          type: "integer",
+          minimum: 1,
+          maximum: 3,
+        },
+        target: {
+          type: "string",
+          description: "The specific part or skill the student should improve.",
+        },
+        suggestion: {
+          type: "string",
+          description: "A concrete revision strategy. Do not write the revised sentence for the student.",
+        },
+        prompt: {
+          type: "string",
+          description: "A question that helps the student revise using their own words.",
+        },
+      },
+    },
+    nextExercise: {
+      type: "object",
+      additionalProperties: false,
+      required: ["title", "instruction", "minutes", "difficulty"],
+      properties: {
+        title: {
+          type: "string",
+        },
+        instruction: {
+          type: "string",
+        },
+        minutes: {
+          type: "integer",
+          minimum: 3,
+          maximum: 15,
+        },
+        difficulty: {
+          type: "string",
+          enum: ["easy", "medium", "challenge"],
         },
       },
     },
@@ -170,6 +266,63 @@ function normalizeDimension(raw: RawAiDimension, fallback: WritingDimension): Wr
   };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object");
+}
+
+function normalizeHighlightSentences(raw: unknown, fallback: MockReport["highlightSentences"]) {
+  if (!Array.isArray(raw)) {
+    return fallback;
+  }
+
+  const highlights = raw
+    .filter(isRecord)
+    .map((item) => ({
+      text: typeof item.text === "string" ? item.text : "",
+      reason: typeof item.reason === "string" ? item.reason : "",
+      relatedDimension: typeof item.relatedDimension === "string" ? item.relatedDimension : "Ideas",
+    }))
+    .filter((item) => item.text && item.reason);
+
+  return highlights.length > 0 ? highlights.slice(0, 2) : fallback;
+}
+
+function normalizeRevisionSuggestions(raw: unknown, fallback: MockReport["revisionSuggestions"]) {
+  if (!Array.isArray(raw)) {
+    return fallback;
+  }
+
+  const suggestions = raw
+    .filter(isRecord)
+    .map((item, index) => ({
+      priority: typeof item.priority === "number" ? item.priority : index + 1,
+      target: typeof item.target === "string" ? item.target : "",
+      suggestion: typeof item.suggestion === "string" ? item.suggestion : "",
+      prompt: typeof item.prompt === "string" ? item.prompt : "",
+    }))
+    .filter((item) => item.target && item.suggestion && item.prompt);
+
+  return suggestions.length > 0 ? suggestions.slice(0, 3) : fallback;
+}
+
+function normalizeNextExercises(raw: unknown, fallback: MockReport["nextExercises"]) {
+  if (!Array.isArray(raw)) {
+    return fallback;
+  }
+
+  const exercises = raw
+    .filter(isRecord)
+    .map((item) => ({
+      title: typeof item.title === "string" ? item.title : "",
+      instruction: typeof item.instruction === "string" ? item.instruction : "",
+      minutes: typeof item.minutes === "number" ? Math.min(15, Math.max(3, item.minutes)) : 8,
+      difficulty: typeof item.difficulty === "string" ? item.difficulty : "easy",
+    }))
+    .filter((item) => item.title && item.instruction);
+
+  return exercises.length > 0 ? exercises.slice(0, 2) : fallback;
+}
+
 function normalizeAiReport({
   title,
   draft,
@@ -201,6 +354,9 @@ function normalizeAiReport({
       strongest,
       weakest,
       dimensions,
+      highlightSentences: normalizeHighlightSentences(raw.highlightSentences, fallback.highlightSentences),
+      revisionSuggestions: normalizeRevisionSuggestions(raw.revisionSuggestions, fallback.revisionSuggestions),
+      nextExercises: normalizeNextExercises(raw.nextExercises, fallback.nextExercises),
     },
     parentSummaryZh: typeof raw.parentSummaryZh === "string" ? raw.parentSummaryZh : null,
   };
@@ -208,13 +364,24 @@ function normalizeAiReport({
 
 function buildPrompt({ title, draft, gradeLevel }: { title: string; draft: string; gradeLevel?: string | null }) {
   return [
-    "You are an English writing coach for primary and middle school students.",
-    "Analyze the student's English writing in a supportive, age-appropriate way.",
-    "Do not rewrite the full essay. Do not provide a polished replacement essay.",
-    "Give specific feedback that helps the student revise with their own words.",
+    "You are an English writing coach for primary and middle school students. Your job is to help the student become a better writer, not to write for them.",
+    "Analyze the student's English writing in a supportive, age-appropriate way using the student's current grade level.",
+    "Do not rewrite the full essay. Do not provide a polished replacement essay. Do not make the writing sound adult.",
+    "Give concrete feedback that helps the student revise with their own words.",
+    "Choose one main growth focus. The student should know exactly what to practice next.",
+    "For revision suggestions, give prompts, strategies, and questions. Never provide a complete replacement paragraph.",
+    "Highlight one or two exact parts from the student's draft that are already working well.",
+    "Next exercises should be short, practical, and doable in 3-15 minutes.",
     "Student-facing feedback must be in English.",
     "The family summary must be in English.",
     "Use these six rubric dimensions exactly: Ideas, Organization, Vocabulary, Grammar, Sentence Fluency, Mechanics.",
+    "Rubric guidance:",
+    "- Ideas: clear topic, relevant details, feelings, examples.",
+    "- Organization: beginning, middle, ending, sequencing, paragraphing.",
+    "- Vocabulary: specific nouns, verbs, adjectives, topic words.",
+    "- Grammar: sentence completeness, tense, agreement, word order.",
+    "- Sentence Fluency: sentence variety, connection words, natural flow.",
+    "- Mechanics: capitalization, punctuation, spelling, spacing.",
     `Student grade level: ${gradeLevel ?? "Not provided"}.`,
     `Title: ${title}`,
     "English draft:",

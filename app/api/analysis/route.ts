@@ -32,7 +32,12 @@ export async function POST(request: Request) {
       focusDimension: report.focus,
       strongestDimension: report.strongest.name,
       weakestDimension: report.weakest.name,
-      rubricJson: report.dimensions,
+      rubricJson: {
+        dimensions: report.dimensions,
+        highlightSentences: report.highlightSentences,
+        revisionSuggestions: report.revisionSuggestions,
+        nextExercises: report.nextExercises,
+      },
       studentFeedback: report.weakest.note,
       parentSummaryZh: analysis.parentSummaryZh,
     };

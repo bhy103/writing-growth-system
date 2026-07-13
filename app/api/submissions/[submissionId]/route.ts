@@ -28,6 +28,7 @@ function isWritingDimension(value: unknown): value is WritingDimension {
 }
 
 function buildReport(submission: {
+  content: string | null;
   title: string;
   analysis: {
     overallLevel: string;
@@ -39,11 +40,20 @@ function buildReport(submission: {
 }): MockReport | null {
   const analysis = submission.analysis;
 
-  if (!analysis || !Array.isArray(analysis.rubricJson)) {
+  if (!analysis) {
     return null;
   }
 
-  const dimensions = analysis.rubricJson.filter(isWritingDimension);
+  const rubricRecord =
+    analysis.rubricJson && typeof analysis.rubricJson === "object" && !Array.isArray(analysis.rubricJson)
+      ? (analysis.rubricJson as Record<string, unknown>)
+      : {};
+  const rawDimensions = Array.isArray(analysis.rubricJson)
+    ? analysis.rubricJson
+    : Array.isArray(rubricRecord.dimensions)
+      ? rubricRecord.dimensions
+      : [];
+  const dimensions = rawDimensions.filter(isWritingDimension);
 
   if (dimensions.length === 0) {
     return null;
@@ -63,6 +73,29 @@ function buildReport(submission: {
     strongest,
     weakest,
     dimensions,
+    highlightSentences: Array.isArray(rubricRecord.highlightSentences)
+      ? (rubricRecord.highlightSentences as MockReport["highlightSentences"])
+      : [],
+    revisionSuggestions: Array.isArray(rubricRecord.revisionSuggestions)
+      ? (rubricRecord.revisionSuggestions as MockReport["revisionSuggestions"])
+      : [
+          {
+            priority: 1,
+            target: weakest.name,
+            suggestion: weakest.note,
+            prompt: "Choose one sentence and revise it using this focus skill.",
+          },
+        ],
+    nextExercises: Array.isArray(rubricRecord.nextExercises)
+      ? (rubricRecord.nextExercises as MockReport["nextExercises"])
+      : [
+          {
+            title: `Practice ${weakest.name}`,
+            instruction: "Revise one sentence from your draft using today's focus skill.",
+            minutes: 8,
+            difficulty: "easy",
+          },
+        ],
   };
 }
 

@@ -1471,6 +1471,84 @@ textarea {
   border-color: var(--green);
 }
 
+.coach-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+  gap: 14px;
+}
+
+.coach-panel {
+  align-content: start;
+  display: grid;
+  gap: 12px;
+}
+
+.coach-panel h3,
+.coach-panel p {
+  margin: 0;
+}
+
+.coach-panel:last-child {
+  grid-column: 1 / -1;
+}
+
+.highlight-list,
+.revision-suggestion-list,
+.next-exercise-list {
+  display: grid;
+  gap: 10px;
+}
+
+.highlight-list article,
+.revision-suggestion-list article,
+.next-exercise-list article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 14px;
+}
+
+.highlight-list blockquote {
+  margin: 0 0 8px;
+}
+
+.revision-suggestion-list article {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.revision-suggestion-list article > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--green);
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.revision-suggestion-list strong,
+.next-exercise-list strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.revision-suggestion-list em {
+  display: block;
+  color: var(--green);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.next-exercise-list span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 blockquote {
   margin: 12px 0;
   border-left: 4px solid var(--blue);
