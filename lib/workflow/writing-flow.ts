@@ -32,11 +32,6 @@ export const viewRoutes: Record<View, string> = {
 
 export const navItems: Array<{ view: View; label: string; testId: string; href: string }> = [
   { view: "dashboard", label: "Dashboard", testId: "nav-dashboard", href: viewRoutes.dashboard },
-  { view: "new-writing", label: "New Writing", testId: "nav-new-writing", href: viewRoutes["new-writing"] },
-  { view: "report", label: "AI Report", testId: "nav-report", href: viewRoutes.report },
-  { view: "revision", label: "Revision", testId: "nav-revision", href: viewRoutes.revision },
-  { view: "history", label: "History", testId: "nav-history", href: viewRoutes.history },
-  { view: "parent", label: "Parent View", testId: "nav-parent", href: viewRoutes.parent },
   { view: "settings", label: "Settings", testId: "nav-settings", href: viewRoutes.settings },
 ];
 

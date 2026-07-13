@@ -22,7 +22,21 @@ export function WritingGrowthPrototype({ initialView = "dashboard" }: WritingGro
   return (
     <AppShell activeView={prototype.view}>
       {prototype.view === "dashboard" && (
-        <StudentDashboard />
+        <StudentDashboard
+          analysisStatus={prototype.analysisStatus}
+          draft={prototype.draft}
+          history={prototype.history}
+          onAnalyzeWriting={prototype.openReport}
+          onDraftChange={prototype.setDraft}
+          onOpenRevision={prototype.openRevision}
+          onSaveDraft={prototype.saveDraft}
+          onTitleChange={prototype.setTitle}
+          onUploadFile={prototype.openUpload}
+          report={prototype.report}
+          saveMessage={prototype.draftSaveMessage}
+          saveStatus={prototype.draftSaveStatus}
+          title={prototype.title}
+        />
       )}
 
       {prototype.view === "new-writing" && (

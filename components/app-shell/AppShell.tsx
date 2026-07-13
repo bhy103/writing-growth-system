@@ -10,12 +10,14 @@ type AppShellProps = {
 };
 
 export function AppShell({ activeView, children }: AppShellProps) {
+  const showFlowProgress = activeView !== "dashboard" && activeView !== "settings";
+
   return (
     <div className="app-shell">
       <Sidebar activeView={activeView} />
       <main className="main">
         <Topbar activeView={activeView} />
-        <FlowProgress activeView={activeView} />
+        {showFlowProgress && <FlowProgress activeView={activeView} />}
         {children}
       </main>
     </div>
