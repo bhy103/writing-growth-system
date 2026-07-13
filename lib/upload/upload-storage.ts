@@ -29,8 +29,60 @@ function normalizeSupabaseProjectUrl(supabaseUrl: string) {
   }
 }
 
+function getKeyKind(serviceRoleKey: string) {
+  if (serviceRoleKey.startsWith("sb_secret_")) {
+    return "sb_secret";
+  }
+
+  if (serviceRoleKey.startsWith("eyJ")) {
+    return "jwt";
+  }
+
+  return "unknown";
+}
+
 export function isObjectStorageConfigured() {
   return Boolean(getSupabaseStorageConfig());
+}
+
+export async function checkSupabaseStorageHealth() {
+  const rawSupabaseUrl = process.env.SUPABASE_URL ?? "";
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  const configuredBucket = process.env.SUPABASE_STORAGE_BUCKET ?? "writing-uploads";
+  const config = getSupabaseStorageConfig();
+
+  if (!config) {
+    return {
+      bucket: configuredBucket,
+      configured: false,
+      keyKind: serviceRoleKey ? getKeyKind(serviceRoleKey) : "missing",
+      message: "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing.",
+      normalizedUrl: rawSupabaseUrl ? normalizeSupabaseProjectUrl(rawSupabaseUrl) : "",
+      rawUrlHasRestPath: rawSupabaseUrl.includes("/rest/v1"),
+    };
+  }
+
+  const response = await fetch(`${config.supabaseUrl}/storage/v1/bucket/${config.bucket}`, {
+    headers: {
+      Authorization: `Bearer ${config.serviceRoleKey}`,
+    },
+  });
+  const responseText = await response.text().catch(() => "");
+
+  return {
+    bucket: config.bucket,
+    configured: true,
+    keyKind: getKeyKind(config.serviceRoleKey),
+    message: response.ok ? "Storage bucket is reachable." : "Storage bucket check failed.",
+    normalizedUrl: config.supabaseUrl,
+    rawUrlHasRestPath: rawSupabaseUrl.includes("/rest/v1"),
+    storageResponse: {
+      body: responseText.slice(0, 500),
+      ok: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+    },
+  };
 }
 
 export function buildPendingStoragePath({
