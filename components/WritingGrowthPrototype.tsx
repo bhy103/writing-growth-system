@@ -80,6 +80,7 @@ export function WritingGrowthPrototype({ initialView = "dashboard" }: WritingGro
       {prototype.view === "revision" && (
         <RevisionWorkspace
           draft={prototype.draft}
+          report={prototype.report}
           revisedDraft={prototype.revisionDraft}
           saveStatus={prototype.revisionSaveStatus}
           saveMessage={prototype.revisionSaveMessage}

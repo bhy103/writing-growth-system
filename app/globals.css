@@ -1189,6 +1189,50 @@ button.submission-option {
   gap: 10px;
 }
 
+.editor-help {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.revision-coach-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.45fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.revision-coach-panel h3,
+.revision-coach-panel p {
+  margin: 0;
+}
+
+.revision-coach-panel h3 {
+  font-size: 28px;
+}
+
+.revision-coach-panel strong {
+  display: block;
+  margin-top: 10px;
+  color: var(--green);
+}
+
+.revision-coach-panel aside {
+  border: 1px solid #eed9b0;
+  border-radius: 8px;
+  background: #fff8ea;
+  color: #6f572d;
+  padding: 14px;
+}
+
+.revision-coach-panel aside span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 label {
   color: var(--muted);
   font-size: 14px;
@@ -1946,6 +1990,7 @@ blockquote {
   .rubric-grid,
   .dashboard-grid,
   .dashboard-report-grid,
+  .revision-coach-panel,
   .two-columns,
   .form-grid.parent-name-grid,
   .upload-review-layout,

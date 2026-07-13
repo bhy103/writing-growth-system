@@ -1,9 +1,10 @@
-import { type ChangeEvent, useEffect } from "react";
+import { type ChangeEvent } from "react";
 import { type RevisionSaveStatus } from "@/hooks/useWritingPrototypeState";
-import { suggestRevision } from "@/lib/mock/mock-analysis";
+import { type MockReport } from "@/lib/mock/mock-analysis";
 
 type RevisionWorkspaceProps = {
   draft: string;
+  report: MockReport;
   revisedDraft: string;
   saveStatus: RevisionSaveStatus;
   saveMessage: string;
@@ -13,6 +14,7 @@ type RevisionWorkspaceProps = {
 
 export function RevisionWorkspace({
   draft,
+  report,
   revisedDraft,
   saveStatus,
   saveMessage,
@@ -20,15 +22,25 @@ export function RevisionWorkspace({
   onSaveRevision,
 }: RevisionWorkspaceProps) {
   const isSaving = saveStatus === "saving";
-
-  useEffect(() => {
-    if (!revisedDraft) {
-      onRevisedDraftChange(suggestRevision(draft));
-    }
-  }, [draft, onRevisedDraftChange, revisedDraft]);
+  const mainSuggestion = report.revisionSuggestions[0];
+  const nextExercise = report.nextExercises[0];
 
   return (
     <section className="view active-view" data-testid="view-revision">
+      <section className="panel revision-coach-panel">
+        <p className="eyebrow">Revision Focus</p>
+        <div>
+          <h3>{report.focus}</h3>
+          <p>{mainSuggestion?.suggestion ?? report.weakest.note}</p>
+          <strong>{mainSuggestion?.prompt ?? "Revise one sentence using this focus."}</strong>
+        </div>
+        {nextExercise && (
+          <aside>
+            <span>Practice task</span>
+            <p>{nextExercise.instruction}</p>
+          </aside>
+        )}
+      </section>
       <section className="revision-layout">
         <div className="panel">
           <h3>Original Draft</h3>
@@ -36,7 +48,9 @@ export function RevisionWorkspace({
         </div>
         <div className="panel editor-panel">
           <h3>Revised Draft</h3>
+          <p className="editor-help">Write your own revision below. The AI coach will check whether your change improves the focus.</p>
           <textarea
+            placeholder="Revise your draft here in your own words..."
             value={revisedDraft}
             onChange={(event: ChangeEvent<HTMLTextAreaElement>) => onRevisedDraftChange(event.target.value)}
           />

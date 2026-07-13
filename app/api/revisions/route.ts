@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { reviewRevisionWithAi } from "@/lib/ai/revision-feedback";
 import { apiErrorResponse } from "@/lib/api/error-response";
 import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
@@ -24,7 +25,14 @@ export async function POST(request: Request) {
     const ownedSubmission = submissionId
       ? await prisma.writingSubmission.findFirst({
           where: { id: submissionId, studentId: student.id },
-          select: { id: true },
+          select: {
+            analysis: {
+              select: {
+                focusDimension: true,
+              },
+            },
+            id: true,
+          },
         })
       : null;
 
@@ -49,11 +57,24 @@ export async function POST(request: Request) {
           select: { id: true },
         });
 
+    const focus = ownedSubmission?.analysis?.focusDimension ?? "the current writing focus";
+    let revisionFeedback = null;
+
+    if (originalContent && revisedContent) {
+      revisionFeedback = await reviewRevisionWithAi({
+        focus,
+        originalContent,
+        revisedContent,
+      });
+    }
+
     const revision = await prisma.revision.create({
       data: {
         submissionId: submission.id,
         content: revisedContent,
-        note: "Student saved a revised draft.",
+        note: revisionFeedback
+          ? `${revisionFeedback.feedback} Next: ${revisionFeedback.nextStep}`
+          : "Student saved a revised draft.",
       },
       select: {
         id: true,
@@ -62,6 +83,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
+      feedback: revisionFeedback,
       revision,
       submissionId: submission.id,
     });

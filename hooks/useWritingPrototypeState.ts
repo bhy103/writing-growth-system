@@ -396,7 +396,11 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
       savedSubmissionId = result.submissionId;
       setCurrentSubmissionId(savedSubmissionId);
       setRevisionSaveStatus("saved");
-      setRevisionSaveMessage("Revision saved.");
+      setRevisionSaveMessage(
+        typeof result.feedback?.feedback === "string"
+          ? result.feedback.feedback
+          : "Revision saved.",
+      );
     } catch (error) {
       setRevisionSaveStatus("error");
       setRevisionSaveMessage(error instanceof Error ? error.message : "Unable to save this revision.");
