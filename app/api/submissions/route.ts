@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { analyzeWritingWithAi } from "@/lib/ai/writing-analysis";
+import { extractWritingFromUpload } from "@/lib/ai/writing-extraction";
 import { apiErrorResponse } from "@/lib/api/error-response";
 import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
@@ -79,6 +81,18 @@ async function createUntitledSubmissionTitle(prisma: ReturnType<typeof getPrisma
   const nextNumber = usedNumbers.length > 0 ? Math.max(...usedNumbers) + 1 : 1;
 
   return `Untitled ${String(nextNumber).padStart(2, "0")}`;
+}
+
+function createAnalysisData(report: Awaited<ReturnType<typeof analyzeWritingWithAi>>["report"], parentSummaryZh: string | null) {
+  return {
+    overallLevel: report.overall,
+    focusDimension: report.focus,
+    strongestDimension: report.strongest.name,
+    weakestDimension: report.weakest.name,
+    rubricJson: report.dimensions,
+    studentFeedback: report.weakest.note,
+    parentSummaryZh,
+  };
 }
 
 async function parseSubmissionRequest(request: Request) {
@@ -166,7 +180,8 @@ export async function POST(request: Request) {
   try {
     const parsedSubmission = await parseSubmissionRequest(request);
     let { title } = parsedSubmission;
-    const { content, submissionId, upload } = parsedSubmission;
+    const { submissionId, upload } = parsedSubmission;
+    let { content } = parsedSubmission;
 
     if (!content && !upload) {
       return NextResponse.json(
@@ -177,6 +192,15 @@ export async function POST(request: Request) {
 
     const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
+    const extractedWriting = !content && upload?.file ? await extractWritingFromUpload(upload.file) : null;
+
+    if (!content && extractedWriting?.content) {
+      content = extractedWriting.content;
+    }
+
+    if (!title && extractedWriting?.title) {
+      title = extractedWriting.title;
+    }
 
     if (!title && upload) {
       title = await createUntitledSubmissionTitle(prisma, student.id);
@@ -225,6 +249,15 @@ export async function POST(request: Request) {
       }
     }
 
+    const analysis = upload && content
+      ? await analyzeWritingWithAi({
+          title,
+          draft: content,
+          gradeLevel: student.gradeLevel,
+        })
+      : null;
+    const analysisData = analysis ? createAnalysisData(analysis.report, analysis.parentSummaryZh) : null;
+
     const submission = ownedSubmission
       ? await prisma.writingSubmission.update({
           where: {
@@ -233,7 +266,15 @@ export async function POST(request: Request) {
           data: {
             title,
             content: content || null,
-            status: "DRAFT",
+            status: analysisData ? "ANALYZED" : "DRAFT",
+            analysis: analysisData
+              ? {
+                  upsert: {
+                    create: analysisData,
+                    update: analysisData,
+                  },
+                }
+              : undefined,
           },
           select: {
             id: true,
@@ -248,7 +289,12 @@ export async function POST(request: Request) {
             title,
             content: content || null,
             sourceType: upload ? sourceTypeByUploadMethod[upload.method] : "TYPED_TEXT",
-            status: "DRAFT",
+            status: analysisData ? "ANALYZED" : "DRAFT",
+            analysis: analysisData
+              ? {
+                  create: analysisData,
+                }
+              : undefined,
             uploads: upload
               ? {
                   create: {
@@ -257,7 +303,7 @@ export async function POST(request: Request) {
                     fileSize: upload.fileSize,
                     storagePath,
                     extractionConfidence: upload.extractionConfidence,
-                    extractedText: upload.extractedText || content,
+                    extractedText: upload.extractedText || extractedWriting?.content || content,
                   },
                 }
               : undefined,
@@ -271,6 +317,9 @@ export async function POST(request: Request) {
         });
 
     return NextResponse.json({
+      extractedText: extractedWriting?.content || undefined,
+      provider: analysis?.provider,
+      report: analysis?.report,
       submission,
       uploadWarning: uploadStorageWarning || undefined,
     });

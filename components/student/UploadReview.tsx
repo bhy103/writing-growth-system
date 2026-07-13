@@ -71,8 +71,8 @@ export function UploadReview({
         </div>
         <div className="panel">
           <p className="eyebrow">Submission details</p>
-          <h3>Save uploaded source</h3>
-          <p className="panel-note">The original file will be saved securely. Text extraction can be added later.</p>
+          <h3>Analyze uploaded writing</h3>
+          <p className="panel-note">The original file will be saved, then AI will read and analyze the writing.</p>
           <label htmlFor="upload-title">Title optional</label>
           <input
             id="upload-title"
@@ -97,7 +97,7 @@ export function UploadReview({
               onClick={onSaveUploadedSource}
               type="button"
             >
-              {uploadSaveStatus === "saving" ? "Saving..." : "Save Upload"}
+              {uploadSaveStatus === "saving" ? "Analyzing..." : "Analyze Upload"}
             </button>
           </div>
         </div>

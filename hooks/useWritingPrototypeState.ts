@@ -278,6 +278,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
 
       const savedSubmissionId = result.submission.id;
       const savedTitle = typeof result.submission.title === "string" ? result.submission.title : requestedTitle || fallbackTitle;
+      const extractedText = typeof result.extractedText === "string" ? result.extractedText : "";
       setCurrentSubmissionId(savedSubmissionId);
       setUploadSaveStatus("saved");
       setUploadSaveMessage(
@@ -289,14 +290,28 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
       const nextSnapshot = {
         ...snapshot,
         title: savedTitle,
-        draft: "",
+        draft: extractedText,
         history: [
-          { id: savedSubmissionId, title: savedTitle, status: "Draft", focus: "Source uploaded" },
+          {
+            id: savedSubmissionId,
+            title: savedTitle,
+            status: result.report ? "Analyzed" : "Draft",
+            focus: result.report?.focus ?? "Source uploaded",
+          },
           ...snapshot.history.filter((item) => item.id !== savedSubmissionId),
         ],
       };
       setSnapshot(nextSnapshot);
       savePrototypeSnapshot(nextSnapshot);
+
+      if (result.report) {
+        setReport(result.report);
+        setAnalysisStatus("ready");
+        setView("report");
+        router.push(`${viewRoutes.report}?submissionId=${savedSubmissionId}`);
+        return;
+      }
+
       router.push(`/workspace/history/${savedSubmissionId}`);
     } catch (error) {
       setUploadSaveStatus("error");
