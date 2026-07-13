@@ -192,7 +192,16 @@ export async function POST(request: Request) {
 
     const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
-    const extractedWriting = !content && upload?.file ? await extractWritingFromUpload(upload.file) : null;
+    let aiWarning = "";
+    let extractedWriting: Awaited<ReturnType<typeof extractWritingFromUpload>> = null;
+
+    if (!content && upload?.file) {
+      try {
+        extractedWriting = await extractWritingFromUpload(upload.file);
+      } catch (error) {
+        aiWarning = error instanceof Error ? error.message : "AI text extraction failed.";
+      }
+    }
 
     if (!content && extractedWriting?.content) {
       content = extractedWriting.content;
@@ -249,13 +258,19 @@ export async function POST(request: Request) {
       }
     }
 
-    const analysis = upload && content
-      ? await analyzeWritingWithAi({
+    let analysis: Awaited<ReturnType<typeof analyzeWritingWithAi>> | null = null;
+
+    if (upload && content) {
+      try {
+        analysis = await analyzeWritingWithAi({
           title,
           draft: content,
           gradeLevel: student.gradeLevel,
-        })
-      : null;
+        });
+      } catch (error) {
+        aiWarning = error instanceof Error ? error.message : "AI analysis failed.";
+      }
+    }
     const analysisData = analysis ? createAnalysisData(analysis.report, analysis.parentSummaryZh) : null;
 
     const submission = ownedSubmission
@@ -321,6 +336,7 @@ export async function POST(request: Request) {
       provider: analysis?.provider,
       report: analysis?.report,
       submission,
+      aiWarning: aiWarning || undefined,
       uploadWarning: uploadStorageWarning || undefined,
     });
   } catch (error) {

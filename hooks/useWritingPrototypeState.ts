@@ -282,7 +282,9 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
       setCurrentSubmissionId(savedSubmissionId);
       setUploadSaveStatus("saved");
       setUploadSaveMessage(
-        typeof result.uploadWarning === "string"
+        typeof result.aiWarning === "string"
+          ? "Upload saved. AI analysis needs attention before the report can be created."
+          : typeof result.uploadWarning === "string"
           ? "Writing record saved. Original file storage still needs configuration."
           : "Upload saved.",
       );

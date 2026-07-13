@@ -22,6 +22,23 @@ export function apiErrorResponse(error: unknown) {
     );
   }
 
+  if (
+    detail.includes("OpenAI") ||
+    detail.includes("openai") ||
+    detail.includes("invalid_request_error") ||
+    detail.includes("Incorrect API key") ||
+    detail.includes("insufficient_quota") ||
+    detail.includes("model_not_found")
+  ) {
+    return NextResponse.json(
+      {
+        message: "AI analysis failed. Please check the OpenAI API key and model settings.",
+        detail,
+      },
+      { status: 500 },
+    );
+  }
+
   return NextResponse.json(
     {
       message: "Database request failed. Please check the deployment environment variables.",
