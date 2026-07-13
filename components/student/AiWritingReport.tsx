@@ -1,13 +1,15 @@
 import { type MockReport } from "@/lib/mock/mock-analysis";
+import { TeacherMarkedDraft } from "./TeacherMarkedDraft";
 
 type AiWritingReportProps = {
   report: MockReport;
+  draft: string;
   analysisStatus: "idle" | "analyzing" | "error" | "ready";
   onRetry: () => void;
   onStartRevision: () => void;
 };
 
-export function AiWritingReport({ report, analysisStatus, onRetry, onStartRevision }: AiWritingReportProps) {
+export function AiWritingReport({ report, draft, analysisStatus, onRetry, onStartRevision }: AiWritingReportProps) {
   return (
     <section className="view active-view" data-testid="view-report">
       {(analysisStatus === "analyzing" || analysisStatus === "error") && (
@@ -53,6 +55,8 @@ export function AiWritingReport({ report, analysisStatus, onRetry, onStartRevisi
         ))}
       </div>
 
+      <TeacherMarkedDraft draft={draft} report={report} />
+
       <div className="coach-report-grid">
         <section className="panel coach-panel">
           <p className="eyebrow">What already works</p>
@@ -96,7 +100,7 @@ export function AiWritingReport({ report, analysisStatus, onRetry, onStartRevisi
               <article key={exercise.title}>
                 <strong>{exercise.title}</strong>
                 <p>{exercise.instruction}</p>
-                <span>{exercise.minutes} min · {exercise.difficulty}</span>
+                <span>{exercise.minutes} min - {exercise.difficulty}</span>
               </article>
             ))}
           </div>
@@ -105,3 +109,4 @@ export function AiWritingReport({ report, analysisStatus, onRetry, onStartRevisi
     </section>
   );
 }
+

@@ -70,6 +70,7 @@ export function WritingGrowthPrototype({ initialView = "dashboard" }: WritingGro
 
       {prototype.view === "report" && (
         <AiWritingReport
+          draft={prototype.draft}
           report={prototype.report}
           analysisStatus={prototype.analysisStatus}
           onRetry={prototype.openReport}

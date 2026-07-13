@@ -1521,6 +1521,87 @@ textarea {
   gap: 14px;
 }
 
+.teacher-markup-panel {
+  margin-bottom: 18px;
+}
+
+.teacher-paper {
+  display: grid;
+  gap: 12px;
+  min-height: 360px;
+  border: 1px solid #d9e3dd;
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, transparent 0 58px, rgba(174, 82, 70, 0.22) 58px 60px, transparent 60px),
+    repeating-linear-gradient(
+      to bottom,
+      #fffdf7 0,
+      #fffdf7 31px,
+      rgba(88, 132, 175, 0.2) 32px,
+      #fffdf7 33px
+    );
+  padding: 30px 34px 30px 76px;
+}
+
+.teacher-paper p {
+  margin: 0;
+  color: #26372f;
+  font-family: "Segoe Print", "Bradley Hand ITC", "Comic Sans MS", cursive;
+  font-size: 20px;
+  line-height: 33px;
+}
+
+.teacher-paper .marked-sentence > span {
+  text-decoration: underline;
+  text-decoration-color: #c0392b;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.teacher-paper p em {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: 12px;
+  font-style: normal;
+  vertical-align: middle;
+}
+
+.teacher-note {
+  display: inline-block;
+  transform: rotate(-1deg);
+  border: 1px solid rgba(192, 57, 43, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 246, 244, 0.88);
+  color: #b43125;
+  padding: 2px 8px;
+  font-family: "Segoe Print", "Bradley Hand ITC", "Comic Sans MS", cursive;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.teacher-note.praise {
+  border-color: rgba(47, 111, 85, 0.28);
+  background: rgba(243, 248, 241, 0.9);
+  color: var(--green);
+}
+
+.teacher-summary {
+  display: grid;
+  gap: 4px;
+  margin-top: 18px;
+  border-top: 2px solid rgba(192, 57, 43, 0.24);
+  color: #b43125;
+  padding-top: 14px;
+  font-family: "Segoe Print", "Bradley Hand ITC", "Comic Sans MS", cursive;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.teacher-summary strong {
+  color: #9f2d22;
+}
+
 .coach-panel {
   align-content: start;
   display: grid;
