@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell/AppShell";
+import { AnalyzeSubmissionButton } from "@/components/student/AnalyzeSubmissionButton";
 import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import { formatFileSize } from "@/lib/upload/upload-source";
@@ -63,6 +64,7 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
   const sourceUpload = submission.uploads[0];
   const hasStoredSourceFile = sourceUpload && !sourceUpload.storagePath.startsWith("pending-storage/");
   const hasPendingSourceFile = sourceUpload && sourceUpload.storagePath.startsWith("pending-storage/");
+  const canAnalyze = Boolean(submission.content?.trim() || hasStoredSourceFile);
 
   return (
     <AppShell activeView="history">
@@ -85,9 +87,11 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
                 View full report
               </Link>
             )}
-            <Link className="secondary-button" href={`/workspace/new-writing?submissionId=${submission.id}`}>
-              {analysis ? "Analyze again" : "Analyze this writing"}
-            </Link>
+            <AnalyzeSubmissionButton
+              disabled={!canAnalyze}
+              label={analysis ? "Analyze again" : "Analyze this writing"}
+              submissionId={submission.id}
+            />
             <Link className="primary-button" href={`/workspace/revision?submissionId=${submission.id}`}>
               Revise this writing
             </Link>
@@ -172,9 +176,11 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
           <section className="panel detail-section">
             <p className="section-eyebrow">AI Writing Report</p>
             <p className="detail-copy">This draft has not been analyzed yet.</p>
-            <Link className="primary-button detail-action" href={`/workspace/new-writing?submissionId=${submission.id}`}>
-              Analyze from writing workspace
-            </Link>
+            <AnalyzeSubmissionButton
+              disabled={!canAnalyze}
+              label={canAnalyze ? "Analyze now" : "Upload a clearer file or add draft text"}
+              submissionId={submission.id}
+            />
           </section>
         )}
 

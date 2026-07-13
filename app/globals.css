@@ -1534,6 +1534,25 @@ blockquote {
   text-decoration: none;
 }
 
+.inline-action-stack {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.detail-actions .inline-action-stack {
+  justify-items: end;
+}
+
+.compact-error {
+  max-width: 320px;
+  margin: 0;
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 .back-link {
   color: var(--green);
   font-size: 14px;

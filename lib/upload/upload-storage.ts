@@ -158,6 +158,26 @@ export async function uploadFileToConfiguredStorage({
   };
 }
 
+export async function downloadFileFromConfiguredStorage(storagePath: string) {
+  const config = getSupabaseStorageConfig();
+
+  if (!config) {
+    throw new Error("Object storage is not configured.");
+  }
+
+  const encodedPath = storagePath.split("/").map(encodeURIComponent).join("/");
+  const response = await fetch(`${config.supabaseUrl}/storage/v1/object/${config.bucket}/${encodedPath}`, {
+    headers: getSupabaseAuthHeaders(config.serviceRoleKey),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(`Unable to read the uploaded file: ${errorText || response.status}`);
+  }
+
+  return response.blob();
+}
+
 export async function createSignedUploadUrl(storagePath: string, expiresIn = 300) {
   const config = getSupabaseStorageConfig();
 
