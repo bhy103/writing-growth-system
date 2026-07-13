@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell/AppShell";
 import { AnalyzeSubmissionButton } from "@/components/student/AnalyzeSubmissionButton";
+import { ExtractSubmissionButton } from "@/components/student/ExtractSubmissionButton";
 import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import { formatFileSize } from "@/lib/upload/upload-source";
@@ -64,7 +65,9 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
   const sourceUpload = submission.uploads[0];
   const hasStoredSourceFile = sourceUpload && !sourceUpload.storagePath.startsWith("pending-storage/");
   const hasPendingSourceFile = sourceUpload && sourceUpload.storagePath.startsWith("pending-storage/");
-  const canAnalyze = Boolean(submission.content?.trim() || hasStoredSourceFile);
+  const displayedDraft = submission.content?.trim() || sourceUpload?.extractedText?.trim() || "";
+  const canExtract = Boolean(!displayedDraft && hasStoredSourceFile);
+  const canAnalyze = Boolean(displayedDraft || hasStoredSourceFile);
 
   return (
     <AppShell activeView="history">
@@ -101,7 +104,25 @@ export default async function WritingDetailPage({ params }: WritingDetailPagePro
         <div className="detail-grid">
           <section className="panel detail-section">
             <p className="section-eyebrow">Original Draft</p>
-            <div className="draft-readout">{submission.content || "No draft content saved."}</div>
+            {displayedDraft ? (
+              <div className="notebook-draft" aria-label="Extracted writing draft">
+                {displayedDraft.split(/\n{2,}/).map((paragraph, index) => (
+                  <p key={`${paragraph.slice(0, 20)}-${index}`}>{paragraph}</p>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-draft-state">
+                <strong>Writing text has not been extracted yet.</strong>
+                <p>
+                  Read the uploaded image and place the student&apos;s writing here as editable draft text.
+                </p>
+                <ExtractSubmissionButton
+                  disabled={!canExtract}
+                  label={canExtract ? "Extract writing from upload" : "Original file is not ready"}
+                  submissionId={submission.id}
+                />
+              </div>
+            )}
           </section>
 
           <aside className="panel detail-section">

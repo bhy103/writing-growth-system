@@ -51,6 +51,7 @@ export async function POST(_request: Request, { params }: AnalyzeSubmissionRoute
     const upload = submission.uploads[0];
     let title = submission.title;
     let content = submission.content?.trim() ?? "";
+    let extractedContent = "";
 
     if (!content && upload && !upload.storagePath.startsWith("pending-storage/")) {
       const blob = await downloadFileFromConfiguredStorage(upload.storagePath);
@@ -64,6 +65,29 @@ export async function POST(_request: Request, { params }: AnalyzeSubmissionRoute
       }
 
       content = extractedWriting?.content?.trim() ?? "";
+      extractedContent = content;
+
+      if (extractedContent) {
+        await prisma.writingSubmission.update({
+          where: {
+            id: submission.id,
+          },
+          data: {
+            title,
+            content: extractedContent,
+            uploads: {
+              update: {
+                where: {
+                  id: upload.id,
+                },
+                data: {
+                  extractedText: extractedContent,
+                },
+              },
+            },
+          },
+        });
+      }
     }
 
     if (!content) {
@@ -105,7 +129,7 @@ export async function POST(_request: Request, { params }: AnalyzeSubmissionRoute
                     id: upload.id,
                   },
                   data: {
-                    extractedText: content,
+                    extractedText: extractedContent || content,
                   },
                 },
               }
