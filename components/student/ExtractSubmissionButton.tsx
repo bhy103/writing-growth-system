@@ -45,7 +45,8 @@ export function ExtractSubmissionButton({
       const result = await readJsonResponse(response);
 
       if (!response.ok) {
-        throw new Error(result.message ?? "Writing extraction could not finish.");
+        const detail = typeof result.detail === "string" ? ` ${result.detail.slice(0, 220)}` : "";
+        throw new Error(`${result.message ?? "Writing extraction could not finish."}${detail}`);
       }
 
       router.refresh();

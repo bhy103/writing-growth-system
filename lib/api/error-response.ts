@@ -30,9 +30,17 @@ export function apiErrorResponse(error: unknown) {
     detail.includes("insufficient_quota") ||
     detail.includes("model_not_found")
   ) {
+    const isExtractionError =
+      detail.includes("extraction") ||
+      detail.includes("input_image") ||
+      detail.includes("image_url") ||
+      detail.includes("vision");
+
     return NextResponse.json(
       {
-        message: "AI analysis failed. Please check the OpenAI API key and model settings.",
+        message: isExtractionError
+          ? "AI text extraction failed. Please check the OpenAI API key and vision model settings."
+          : "AI analysis failed. Please check the OpenAI API key and model settings.",
         detail,
       },
       { status: 500 },

@@ -25,7 +25,7 @@ const extractionSchema = {
 };
 
 function getOpenAiModel() {
-  return process.env.OPENAI_VISION_MODEL ?? process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
+  return process.env.OPENAI_VISION_MODEL ?? "gpt-4.1-mini";
 }
 
 function isOpenAiConfigured() {
