@@ -41,6 +41,19 @@ function getKeyKind(serviceRoleKey: string) {
   return "unknown";
 }
 
+function getSupabaseAuthHeaders(serviceRoleKey: string): Record<string, string> {
+  if (getKeyKind(serviceRoleKey) === "sb_secret") {
+    return {
+      apikey: serviceRoleKey,
+    };
+  }
+
+  return {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+  };
+}
+
 export function isObjectStorageConfigured() {
   return Boolean(getSupabaseStorageConfig());
 }
@@ -63,9 +76,7 @@ export async function checkSupabaseStorageHealth() {
   }
 
   const response = await fetch(`${config.supabaseUrl}/storage/v1/bucket/${config.bucket}`, {
-    headers: {
-      Authorization: `Bearer ${config.serviceRoleKey}`,
-    },
+    headers: getSupabaseAuthHeaders(config.serviceRoleKey),
   });
   const responseText = await response.text().catch(() => "");
 
@@ -128,7 +139,7 @@ export async function uploadFileToConfiguredStorage({
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${config.serviceRoleKey}`,
+        ...getSupabaseAuthHeaders(config.serviceRoleKey),
         "Content-Type": file.type || "application/octet-stream",
         "x-upsert": "false",
       },
@@ -160,7 +171,7 @@ export async function createSignedUploadUrl(storagePath: string, expiresIn = 300
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${config.serviceRoleKey}`,
+        ...getSupabaseAuthHeaders(config.serviceRoleKey),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ expiresIn }),
