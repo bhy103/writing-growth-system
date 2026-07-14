@@ -972,7 +972,9 @@ a {
 
 .hero-band,
 .panel,
-.report-header {
+.report-header,
+.report-main-summary,
+.today-focus-panel {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1437,6 +1439,71 @@ textarea {
   margin-bottom: 18px;
 }
 
+.report-summary-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.7fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.report-main-summary {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 12px;
+  min-height: 190px;
+  padding: 24px;
+}
+
+.report-main-summary h2 {
+  margin: 0;
+  font-size: clamp(34px, 4vw, 56px);
+}
+
+.report-main-summary p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1.55;
+}
+
+.today-focus-panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 22px;
+}
+
+.today-focus-panel h3 {
+  margin: 0;
+  color: var(--green-dark);
+  font-size: 26px;
+}
+
+.today-focus-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.focus-pair {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.focus-pair span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.focus-pair strong {
+  color: var(--ink);
+}
+
 .analysis-state-panel {
   display: none;
   align-items: center;
@@ -1502,6 +1569,54 @@ textarea {
   margin-bottom: 18px;
 }
 
+.skills-snapshot-panel {
+  margin-bottom: 14px;
+}
+
+.skills-snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.skills-snapshot-grid article {
+  display: grid;
+  gap: 10px;
+  min-height: 86px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 12px;
+}
+
+.skills-snapshot-grid article.active {
+  border-color: var(--green);
+  background: #f3f8f1;
+}
+
+.skills-snapshot-grid article div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.skills-snapshot-grid strong {
+  font-size: 14px;
+}
+
+.skills-snapshot-grid span {
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.score-meter.compact {
+  margin: 0;
+}
+
+.score-meter.compact span {
+  height: 6px;
+}
+
 .rubric-card {
   min-height: 150px;
   border: 1px solid var(--line);
@@ -1559,8 +1674,20 @@ textarea {
   gap: 14px;
 }
 
+.report-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.65fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.coach-stack {
+  display: grid;
+  gap: 14px;
+}
+
 .teacher-markup-panel {
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 
 .teacher-paper {
@@ -2120,6 +2247,9 @@ blockquote {
 
   .submission-grid,
   .rubric-grid,
+  .skills-snapshot-grid,
+  .report-summary-layout,
+  .report-workspace-grid,
   .dashboard-grid,
   .dashboard-report-grid,
   .revision-coach-panel,
