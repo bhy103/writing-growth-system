@@ -92,7 +92,7 @@ export function VocabularyCoach() {
       setActiveSet(result.set);
       setActivePack(result.pack);
       setRecentSets((current) => [result.set, ...current.filter((set) => set.id !== result.set.id)].slice(0, 12));
-      setMessage("Vocabulary study pack created.");
+      setMessage("Vocabulary study pack created and archived as a PDF.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Vocabulary generation failed.");
     } finally {
@@ -103,7 +103,7 @@ export function VocabularyCoach() {
   function showRecent(set: VocabularySet) {
     setActiveSet(set);
     setActivePack(null);
-    setMessage("Open the PDF to review this saved vocabulary pack.");
+    setMessage("Open the archived PDF to review this saved vocabulary pack.");
   }
 
   const canDownload = Boolean(activeSet?.id);
@@ -174,17 +174,20 @@ export function VocabularyCoach() {
 
         <aside className="panel vocabulary-recent-panel">
           <div className="section-heading">
-            <h3>Recent packs</h3>
+            <h3>PDF archive</h3>
           </div>
           {recentSets.length === 0 ? (
-            <p>No vocabulary packs yet.</p>
+            <p>No saved vocabulary PDFs yet.</p>
           ) : (
             <div className="vocabulary-set-list">
               {recentSets.map((set) => (
-                <button key={set.id} className="vocabulary-set-row" onClick={() => showRecent(set)} type="button">
-                  <strong>{set.title}</strong>
-                  <span>{Array.isArray(set.words) ? set.words.length : 0} words</span>
-                </button>
+                <div key={set.id} className="vocabulary-set-row">
+                  <button onClick={() => showRecent(set)} type="button">
+                    <strong>{set.title}</strong>
+                    <span>{Array.isArray(set.words) ? set.words.length : 0} words</span>
+                  </button>
+                  <a href={`/api/vocabulary/${set.id}/pdf`}>PDF</a>
+                </div>
               ))}
             </div>
           )}

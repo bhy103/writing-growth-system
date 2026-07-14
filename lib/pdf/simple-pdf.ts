@@ -1,6 +1,7 @@
 type PdfSection = {
   heading: string;
   body: string;
+  pageBreakBefore?: boolean;
 };
 
 type PdfDocumentInput = {
@@ -21,10 +22,10 @@ const maxCharsPerLine = 92;
 function sanitizePdfText(value: string) {
   return value
     .normalize("NFKD")
-    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "")
-    .replace(/[“”]/g, '"')
-    .replace(/[‘’]/g, "'")
-    .replace(/[–—]/g, "-");
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "");
 }
 
 function escapePdfText(value: string) {
@@ -87,6 +88,16 @@ function createPages(input: PdfDocumentInput) {
     y = pageHeight - margin;
   }
 
+  function startNewPage() {
+    if (currentPage().length === 0) {
+      return;
+    }
+
+    pages.push([]);
+    pageIndex += 1;
+    y = pageHeight - margin;
+  }
+
   function writeLine(text: string, size = bodySize, extraGap = 0) {
     ensureSpace(1);
     addTextLine(currentPage(), text, margin, y, size);
@@ -103,6 +114,10 @@ function createPages(input: PdfDocumentInput) {
   }
 
   for (const section of input.sections) {
+    if (section.pageBreakBefore) {
+      startNewPage();
+    }
+
     ensureSpace(3);
     y -= 4;
     writeLine(section.heading.toUpperCase(), headingSize, 3);
@@ -123,7 +138,9 @@ export function createSimpleTextPdf(input: PdfDocumentInput) {
   const objects: string[] = [];
 
   objects.push("<< /Type /Catalog /Pages 2 0 R >>");
-  objects.push(`<< /Type /Pages /Kids [${pageStreams.map((_, index) => `${3 + index * 2} 0 R`).join(" ")}] /Count ${pageStreams.length} >>`);
+  objects.push(
+    `<< /Type /Pages /Kids [${pageStreams.map((_, index) => `${3 + index * 2} 0 R`).join(" ")}] /Count ${pageStreams.length} >>`,
+  );
 
   pageStreams.forEach((stream, index) => {
     const pageObjectNumber = 3 + index * 2;

@@ -898,15 +898,16 @@ a {
 }
 
 .vocabulary-set-row {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfcfa;
   color: var(--ink);
   padding: 12px;
-  text-align: left;
 }
 
 .vocabulary-set-row:hover {
@@ -914,10 +915,38 @@ a {
   background: #f3f8f1;
 }
 
+.vocabulary-set-row button {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.vocabulary-set-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .vocabulary-set-row span {
   color: var(--muted);
   font-size: 13px;
   font-weight: 800;
+}
+
+.vocabulary-set-row a {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--green);
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .vocabulary-output-grid {
