@@ -24,20 +24,23 @@ function parseWords(input: string) {
     .slice(0, 40);
 }
 
-function createDefaultTitle() {
-  const today = new Intl.DateTimeFormat("en-AU", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date());
+function formatPackNumber(value: number) {
+  return String(value).padStart(3, "0");
+}
 
-  return `Vocabulary Pack - ${today}`;
+function createDefaultTitle(sequenceNumber: number) {
+  return `Vocabulary Study ${formatPackNumber(sequenceNumber)}`;
 }
 
 export async function GET() {
   try {
     const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
+    const totalSets = await prisma.vocabularySet.count({
+      where: {
+        studentId: student.id,
+      },
+    });
     const sets = await prisma.vocabularySet.findMany({
       where: {
         studentId: student.id,
@@ -55,8 +58,9 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      sets: sets.map((set) => ({
+      sets: sets.map((set, index) => ({
         id: set.id,
+        archiveNumber: totalSets - index,
         title: set.title,
         words: Array.isArray(set.sourceWords) ? set.sourceWords : [],
         createdAt: set.createdAt,
@@ -80,8 +84,14 @@ export async function POST(request: Request) {
 
     const student = await requireCurrentStudentProfile();
     const prisma = getPrisma();
+    const existingSetCount = await prisma.vocabularySet.count({
+      where: {
+        studentId: student.id,
+      },
+    });
+    const archiveNumber = existingSetCount + 1;
     const requestedTitle = typeof record.title === "string" ? record.title.trim() : "";
-    const title = requestedTitle || createDefaultTitle();
+    const title = requestedTitle || createDefaultTitle(archiveNumber);
     const generated = await generateVocabularyStudyPack({
       gradeLevel: student.gradeLevel,
       title,
@@ -92,7 +102,7 @@ export async function POST(request: Request) {
     const vocabularySet = await prisma.vocabularySet.create({
       data: {
         studentId: student.id,
-        title: pack.title || title,
+        title: requestedTitle ? pack.title || title : title,
         sourceWords: words,
         vocabularySection: pack.vocabularySection,
         worksheet: pack.worksheet,
@@ -114,6 +124,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       set: {
         ...vocabularySet,
+        archiveNumber,
         words: vocabularySet.sourceWords,
       },
       pack,

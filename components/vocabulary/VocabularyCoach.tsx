@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 type VocabularySet = {
   id: string;
+  archiveNumber?: number;
   title: string;
   words: string[];
   vocabularySection?: string;
@@ -28,6 +29,24 @@ function splitWords(words: string) {
     .split(/[\n,;]+/)
     .map((word) => word.trim())
     .filter(Boolean);
+}
+
+function formatArchiveNumber(value?: number) {
+  return typeof value === "number" && Number.isFinite(value) ? String(value).padStart(3, "0") : "";
+}
+
+function formatGeneratedAt(value?: string) {
+  if (!value) {
+    return "Generated date unavailable";
+  }
+
+  return `Generated ${new Intl.DateTimeFormat("en-AU", {
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(value))}`;
 }
 
 export function VocabularyCoach() {
@@ -183,8 +202,13 @@ export function VocabularyCoach() {
               {recentSets.map((set) => (
                 <div key={set.id} className="vocabulary-set-row">
                   <button onClick={() => showRecent(set)} type="button">
-                    <strong>{set.title}</strong>
-                    <span>{Array.isArray(set.words) ? set.words.length : 0} words</span>
+                    <strong>
+                      {formatArchiveNumber(set.archiveNumber) ? `${formatArchiveNumber(set.archiveNumber)} · ` : ""}
+                      {set.title}
+                    </strong>
+                    <span>
+                      {formatGeneratedAt(set.createdAt)} · {Array.isArray(set.words) ? set.words.length : 0} words
+                    </span>
                   </button>
                   <a href={`/api/vocabulary/${set.id}/pdf`}>PDF</a>
                 </div>
