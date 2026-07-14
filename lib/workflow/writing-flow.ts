@@ -1,5 +1,7 @@
 export type View =
   | "dashboard"
+  | "vocabulary"
+  | "math"
   | "new-writing"
   | "upload-review"
   | "report"
@@ -9,7 +11,9 @@ export type View =
   | "settings";
 
 export const pageTitles: Record<View, string> = {
-  dashboard: "Dashboard",
+  dashboard: "Writing Coach",
+  vocabulary: "Vocabulary Coach",
+  math: "Math Coach",
   "new-writing": "New Writing",
   "upload-review": "Upload Submission",
   report: "AI Writing Report",
@@ -21,6 +25,8 @@ export const pageTitles: Record<View, string> = {
 
 export const viewRoutes: Record<View, string> = {
   dashboard: "/workspace",
+  vocabulary: "/workspace/vocabulary",
+  math: "/workspace/math",
   "new-writing": "/workspace/new-writing",
   "upload-review": "/workspace/upload-review",
   report: "/workspace/report",
@@ -30,9 +36,10 @@ export const viewRoutes: Record<View, string> = {
   settings: "/workspace/settings",
 };
 
-export const navItems: Array<{ view: View; label: string; testId: string; href: string }> = [
-  { view: "dashboard", label: "Dashboard", testId: "nav-dashboard", href: viewRoutes.dashboard },
-  { view: "settings", label: "Settings", testId: "nav-settings", href: viewRoutes.settings },
+export const navItems: Array<{ view: View; label: string; testId: string; href: string; caption: string }> = [
+  { view: "dashboard", label: "Writing", testId: "nav-writing", href: viewRoutes.dashboard, caption: "Drafts, feedback, revision" },
+  { view: "vocabulary", label: "Vocabulary", testId: "nav-vocabulary", href: viewRoutes.vocabulary, caption: "Word growth and usage" },
+  { view: "math", label: "Math", testId: "nav-math", href: viewRoutes.math, caption: "Problem practice coach" },
 ];
 
 export const flowSteps = [
@@ -45,6 +52,8 @@ export const flowSteps = [
 
 export const viewStep: Record<View, number> = {
   dashboard: 0,
+  vocabulary: 0,
+  math: 0,
   "new-writing": 0,
   "upload-review": 0,
   report: 2,

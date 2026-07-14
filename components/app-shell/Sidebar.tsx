@@ -6,18 +6,19 @@ type SidebarProps = {
 };
 
 export function Sidebar({ activeView }: SidebarProps) {
-  const activeNavView = activeView === "settings" ? "settings" : "dashboard";
+  const activeNavView = activeView === "vocabulary" || activeView === "math" ? activeView : "dashboard";
 
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-mark">W</div>
+        <div className="brand-mark">C</div>
         <div>
-          <strong>Writing Growth</strong>
-          <span>English writing coach</span>
+          <strong>Family Coach</strong>
+          <span>Personal learning coach</span>
         </div>
       </div>
       <nav className="nav" aria-label="Main navigation">
+        <p className="nav-section-label">Subjects</p>
         {navItems.map((item) => (
           <Link
             key={item.view}
@@ -25,7 +26,8 @@ export function Sidebar({ activeView }: SidebarProps) {
             data-testid={item.testId}
             href={item.href}
           >
-            {item.label}
+            <strong>{item.label}</strong>
+            <span>{item.caption}</span>
           </Link>
         ))}
       </nav>

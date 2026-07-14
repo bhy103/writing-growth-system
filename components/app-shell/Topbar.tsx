@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { StudentSwitcher } from "@/components/app-shell/StudentSwitcher";
 import { useWorkspaceAccount } from "@/components/app-shell/WorkspaceAccountContext";
 import { pageTitles, type View } from "@/lib/workflow/writing-flow";
@@ -34,6 +35,9 @@ export function Topbar({ activeView }: TopbarProps) {
         )}
         {email && <span className="user-chip">{email}</span>}
         <button className="icon-button">EN</button>
+        <Link className="icon-button" href="/workspace/settings" aria-label="Account settings">
+          Settings
+        </Link>
         <button className="secondary-button" onClick={logout} type="button">
           Logout
         </button>

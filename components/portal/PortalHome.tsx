@@ -1,39 +1,39 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 const workflowSteps = [
   {
-    label: "Submit",
-    title: "Upload or type a draft",
-    body: "Students can type directly, take a photo, upload an image, or upload a document.",
+    label: "Choose",
+    title: "Pick a subject coach",
+    body: "Families can guide learning through Writing, Vocabulary, and Math workspaces.",
   },
   {
-    label: "Review",
-    title: "Confirm the extracted text",
-    body: "Students check the text before feedback starts, so the writing stays accurate.",
+    label: "Practice",
+    title: "Submit real student work",
+    body: "Students can type, upload, or work through short tasks while the coach tracks patterns.",
   },
   {
-    label: "Improve",
-    title: "Revise with focused guidance",
-    body: "The workspace gives one clear next step across ideas, structure, vocabulary, and fluency.",
+    label: "Grow",
+    title: "Get one clear next step",
+    body: "The system focuses on achievable feedback, practice, and long-term learning growth.",
   },
 ];
 
-const skillItems = ["Ideas", "Organization", "Vocabulary", "Grammar", "Sentence Fluency", "Mechanics"];
+const subjectItems = ["Writing", "Vocabulary", "Math"];
 
 export function PortalHome() {
   return (
     <main className="portal-page">
       <header className="portal-nav">
         <Link className="portal-brand" href="/">
-          <span className="brand-mark">W</span>
+          <span className="brand-mark">C</span>
           <div>
-            <strong>Writing Growth System</strong>
-            <span>English writing improvement for students</span>
+            <strong>Family Coach System</strong>
+            <span>Personal learning coach for students</span>
           </div>
         </Link>
         <nav className="portal-menu" aria-label="Portal navigation">
           <a href="#workflow">Workflow</a>
-          <a href="#skills">Skills</a>
+          <a href="#skills">Subjects</a>
           <a href="#preview">Preview</a>
         </nav>
         <div className="portal-actions">
@@ -48,11 +48,11 @@ export function PortalHome() {
 
       <section className="portal-hero-stage">
         <div className="portal-hero-content">
-          <p className="eyebrow">English Writing Growth Platform</p>
-          <h1>Turn every English draft into a clear next step.</h1>
+          <p className="eyebrow">Personal Family Coach Platform</p>
+          <h1>One calm learning coach for every child at home.</h1>
           <p>
-            A focused student workspace for writing submission, text review, skill-based feedback,
-            revision practice, and progress tracking.
+            A family learning system for Writing, Vocabulary, and Math, built around student work,
+            helpful feedback, short practice, and steady progress.
           </p>
           <div className="portal-cta-row">
             <Link className="primary-button large" href="/login">
@@ -67,8 +67,8 @@ export function PortalHome() {
         <div className="hero-product-preview" aria-label="Workspace preview">
           <div className="hero-preview-top">
             <div>
-              <span>Current draft</span>
-              <strong>A Memorable Day</strong>
+              <span>Current student</span>
+              <strong>Lena Pan</strong>
             </div>
             <span className="status-pill">Ready</span>
           </div>
@@ -76,59 +76,59 @@ export function PortalHome() {
             <span className="scene-line wide" />
             <span className="scene-line" />
             <span className="scene-line short" />
-            <strong>Writing focus: Sentence Fluency</strong>
+            <strong>Today: Writing Coach</strong>
           </div>
           <div className="hero-feedback-grid">
             <div>
-              <span>Strongest skill</span>
-              <strong>Ideas</strong>
+              <span>Active subject</span>
+              <strong>Writing</strong>
             </div>
             <div>
-              <span>Next focus</span>
-              <strong>Sentence Fluency</strong>
+              <span>Next subject</span>
+              <strong>Vocabulary</strong>
             </div>
           </div>
           <div className="hero-note-card">
-            Try combining two short sentences with because, when, or after.
+            Each subject gives one practical next step for the student.
           </div>
         </div>
       </section>
 
       <section className="portal-section portal-summary-strip" aria-label="Product highlights">
         <div>
-          <strong>English-first</strong>
-          <span>All student feedback and coaching focus on English writing improvement.</span>
+          <strong>Family-first</strong>
+          <span>One account can support multiple students and subjects.</span>
         </div>
         <div>
-          <strong>Upload-ready</strong>
-          <span>Photo, image, document, and direct typing entries are already framed.</span>
+          <strong>Subject-based</strong>
+          <span>Writing is live first, with Vocabulary and Math ready as dedicated spaces.</span>
         </div>
         <div>
           <strong>Progress-focused</strong>
-          <span>Students see writing strengths, next focus areas, and revision history.</span>
+          <span>Students see strengths, next focus areas, and practice history over time.</span>
         </div>
       </section>
 
       <section className="portal-section portal-two-column" id="skills">
         <div>
           <p className="eyebrow">For Students</p>
-          <h2>Practice English writing inside one focused workspace.</h2>
+          <h2>Move between subjects without losing the learning thread.</h2>
           <p>
-            Students move from draft to report to revision while the system keeps attention on one
-            practical writing skill at a time.
+            Each subject has its own workspace, but the coaching style stays consistent: clear,
+            friendly, and focused on one next step.
           </p>
           <div className="skill-cloud">
-            {skillItems.map((item) => (
+            {subjectItems.map((item) => (
               <span key={item}>{item}</span>
             ))}
           </div>
         </div>
         <div className="parent-language-panel">
           <p className="eyebrow">For Families</p>
-          <h3>Clear progress without rewriting the draft.</h3>
+          <h3>Clear progress across the whole family.</h3>
           <p>
-            The system helps families understand what the student is practicing while keeping the
-            actual writing, feedback, and revision workflow centered on English.
+            The system helps families understand what each student is practicing, where they are
+            improving, and what the next small learning step should be.
           </p>
         </div>
       </section>
@@ -136,7 +136,7 @@ export function PortalHome() {
       <section className="portal-section" id="workflow">
         <div className="section-heading">
           <p className="eyebrow">Workflow</p>
-          <h2>From submission to revision in three clear moves.</h2>
+          <h2>From subject choice to steady progress in three clear moves.</h2>
         </div>
         <div className="workflow-grid">
           {workflowSteps.map((step) => (
@@ -152,21 +152,21 @@ export function PortalHome() {
       <section className="portal-section product-preview-section" id="preview">
         <div className="section-heading">
           <p className="eyebrow">Workspace Preview</p>
-          <h2>A complete student writing workspace is already in place.</h2>
+          <h2>A family coach workspace with subject-by-subject growth.</h2>
         </div>
         <div className="portal-product-frame">
           <div className="product-sidebar">
-            <strong>Writing Growth</strong>
-            <span className="active">Dashboard</span>
-            <span>New Writing</span>
-            <span>AI Report</span>
-            <span>Revision</span>
+            <strong>Family Coach</strong>
+            <span className="active">Writing</span>
+            <span>Vocabulary</span>
+            <span>Math</span>
+            <span>Settings</span>
           </div>
           <div className="product-main">
             <div className="product-topline">
               <div>
-                <span>Current draft</span>
-                <strong>A Memorable Day</strong>
+                <span>Current student</span>
+                <strong>Lena Pan</strong>
               </div>
               <Link className="primary-button" href="/workspace">
                 Open Workspace
@@ -174,19 +174,19 @@ export function PortalHome() {
             </div>
             <div className="product-panels">
               <div>
-                <span>Strongest skill</span>
-                <strong>Ideas</strong>
-                <p>Your main idea is clear and includes a personal detail.</p>
+                <span>Writing</span>
+                <strong>Ready</strong>
+                <p>Upload drafts, get teacher-style feedback, and revise with one clear target.</p>
               </div>
               <div>
-                <span>Next focus</span>
-                <strong>Sentence Fluency</strong>
-                <p>Try combining two short sentences with because, when, or after.</p>
+                <span>Vocabulary</span>
+                <strong>Coming next</strong>
+                <p>Build word banks from each student&apos;s real writing and reading needs.</p>
               </div>
               <div>
-                <span>Revision goal</span>
-                <strong>One clear improvement</strong>
-                <p>Make the next draft stronger without replacing the student&apos;s own voice.</p>
+                <span>Math</span>
+                <strong>Coming next</strong>
+                <p>Track problem-solving patterns and practice small topic-based skills.</p>
               </div>
             </div>
           </div>
