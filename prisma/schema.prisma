@@ -78,6 +78,7 @@ model StudentProfile {
 
   user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   submissions WritingSubmission[]
+  vocabularySets VocabularySet[]
 }
 
 model WritingSubmission {
@@ -133,4 +134,21 @@ model UploadAsset {
   createdAt             DateTime @default(now())
 
   submission WritingSubmission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+}
+
+model VocabularySet {
+  id                String   @id @default(cuid())
+  studentId         String
+  title             String
+  sourceWords       Json
+  vocabularySection String   @db.Text
+  worksheet         String   @db.Text
+  answerKey         String   @db.Text
+  provider          String   @default("openai")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
 }
