@@ -27,6 +27,14 @@ export type NextExercise = {
   difficulty: string;
 };
 
+export type TeacherMark = {
+  text: string;
+  category: string;
+  note: string;
+  example: string;
+  type: "correction" | "focus" | "praise";
+};
+
 export type MockReport = {
   title: string;
   overall: string;
@@ -37,6 +45,7 @@ export type MockReport = {
   highlightSentences: HighlightSentence[];
   revisionSuggestions: RevisionSuggestion[];
   nextExercises: NextExercise[];
+  teacherMarks: TeacherMark[];
 };
 
 export function getWordCount(text: string) {
@@ -153,6 +162,30 @@ export function createMockReport({ title, draft }: { title: string; draft: strin
         difficulty: "easy",
       },
     ],
+    teacherMarks: ([
+      firstSentence
+        ? {
+            text: firstSentence,
+            category: "Ideas",
+            note: "Clear opening. The reader can tell what the writing is about.",
+            example: "Next, add one specific detail that shows what happened.",
+            type: "praise",
+          }
+        : {
+            text: title,
+            category: weakest.name,
+            note: weakest.note,
+            example: "Choose one sentence and improve only one thing first.",
+            type: "focus",
+          },
+      {
+        text: draft.match(/\bi\b/)?.[0] ?? firstSentence,
+        category: "Mechanics",
+        note: "Check capitalization, punctuation, and spelling before the final copy.",
+        example: "Example: write I with a capital letter.",
+            type: hasMechanicsIssue ? "correction" : "focus",
+          },
+    ] satisfies TeacherMark[]).filter((mark) => mark.text),
   };
 }
 

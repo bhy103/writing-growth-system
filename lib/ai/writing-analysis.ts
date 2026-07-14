@@ -24,6 +24,7 @@ type RawAiReport = {
   highlightSentences?: unknown;
   revisionSuggestions?: unknown;
   nextExercises?: unknown;
+  teacherMarks?: unknown;
   parentSummaryZh?: unknown;
 };
 
@@ -57,6 +58,7 @@ const analysisSchema = {
     "highlightSentences",
     "revisionSuggestions",
     "nextExercises",
+    "teacherMarks",
     "parentSummaryZh",
   ],
   properties: {
@@ -93,6 +95,14 @@ const analysisSchema = {
       minItems: 1,
       maxItems: 2,
       items: { $ref: "#/$defs/nextExercise" },
+    },
+    teacherMarks: {
+      type: "array",
+      minItems: 4,
+      maxItems: 8,
+      description:
+        "Human-teacher style red pen notes. Cover multiple dimensions, not only vocabulary. Each mark must refer to an exact phrase or sentence from the student's draft.",
+      items: { $ref: "#/$defs/teacherMark" },
     },
     parentSummaryZh: {
       type: "string",
@@ -193,6 +203,36 @@ const analysisSchema = {
         difficulty: {
           type: "string",
           enum: ["easy", "medium", "challenge"],
+        },
+      },
+    },
+    teacherMark: {
+      type: "object",
+      additionalProperties: false,
+      required: ["text", "category", "note", "example", "type"],
+      properties: {
+        text: {
+          type: "string",
+          description:
+            "An exact short phrase or sentence copied from the student's draft. Keep it short enough to display beside a red pen note.",
+        },
+        category: {
+          type: "string",
+          enum: ["Ideas", "Organization", "Vocabulary", "Grammar", "Sentence Fluency", "Mechanics"],
+        },
+        note: {
+          type: "string",
+          description:
+            "Specific teacher-style feedback for this exact text. Explain what works or what needs attention.",
+        },
+        example: {
+          type: "string",
+          description:
+            "One short example, question, or revision hint. Do not rewrite the whole sentence; keep the student's voice.",
+        },
+        type: {
+          type: "string",
+          enum: ["correction", "focus", "praise"],
         },
       },
     },
@@ -323,6 +363,30 @@ function normalizeNextExercises(raw: unknown, fallback: MockReport["nextExercise
   return exercises.length > 0 ? exercises.slice(0, 2) : fallback;
 }
 
+function normalizeTeacherMarks(raw: unknown, fallback: MockReport["teacherMarks"]) {
+  if (!Array.isArray(raw)) {
+    return fallback;
+  }
+
+  const marks = raw
+    .filter(isRecord)
+    .map((item) => {
+      const rawType = typeof item.type === "string" ? item.type : "focus";
+      const type = ["correction", "focus", "praise"].includes(rawType) ? rawType : "focus";
+
+      return {
+        text: typeof item.text === "string" ? item.text.trim() : "",
+        category: typeof item.category === "string" ? item.category : "Writing",
+        note: typeof item.note === "string" ? item.note.trim() : "",
+        example: typeof item.example === "string" ? item.example.trim() : "",
+        type: type as MockReport["teacherMarks"][number]["type"],
+      };
+    })
+    .filter((item) => item.text && item.note);
+
+  return marks.length > 0 ? marks.slice(0, 8) : fallback;
+}
+
 function normalizeAiReport({
   title,
   draft,
@@ -357,6 +421,7 @@ function normalizeAiReport({
       highlightSentences: normalizeHighlightSentences(raw.highlightSentences, fallback.highlightSentences),
       revisionSuggestions: normalizeRevisionSuggestions(raw.revisionSuggestions, fallback.revisionSuggestions),
       nextExercises: normalizeNextExercises(raw.nextExercises, fallback.nextExercises),
+      teacherMarks: normalizeTeacherMarks(raw.teacherMarks, fallback.teacherMarks),
     },
     parentSummaryZh: typeof raw.parentSummaryZh === "string" ? raw.parentSummaryZh : null,
   };
@@ -365,12 +430,17 @@ function normalizeAiReport({
 function buildPrompt({ title, draft, gradeLevel }: { title: string; draft: string; gradeLevel?: string | null }) {
   return [
     "You are an English writing coach for primary and middle school students. Your job is to help the student become a better writer, not to write for them.",
-    "Analyze the student's English writing in a supportive, age-appropriate way using the student's current grade level.",
+    "Analyze the student's English writing like a thoughtful classroom teacher: specific, warm, honest, and age-appropriate.",
+    "Use the student's current grade level and likely writing maturity. A Year 3 draft, Year 5 draft, and Year 8 draft should receive different expectations.",
     "Do not rewrite the full essay. Do not provide a polished replacement essay. Do not make the writing sound adult.",
     "Give concrete feedback that helps the student revise with their own words.",
     "Choose one main growth focus. The student should know exactly what to practice next.",
-    "For revision suggestions, give prompts, strategies, and questions. Never provide a complete replacement paragraph.",
+    "For revision suggestions, give prompts, strategies, mini examples, and questions. Never provide a complete replacement paragraph.",
     "Highlight one or two exact parts from the student's draft that are already working well.",
+    "For teacherMarks, mark the actual writing as a human teacher would. Include a mix of praise and correction across Ideas, Organization, Vocabulary, Grammar, Sentence Fluency, and Mechanics.",
+    "Do not repeat the same note. Do not write generic notes like 'Choose one stronger verb' unless you name the exact word and give a concrete option or question.",
+    "For grammar or mechanics issues, identify the specific issue and show a tiny example such as 'was -> were' or 'teach -> taught/teaches' when appropriate.",
+    "For content and logic, comment on clarity, missing explanation, paragraph sequence, cause/effect, and whether the ending answers the prompt.",
     "Next exercises should be short, practical, and doable in 3-15 minutes.",
     "Student-facing feedback must be in English.",
     "The family summary must be in English.",

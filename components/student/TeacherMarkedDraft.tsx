@@ -6,6 +6,8 @@ type TeacherMarkedDraftProps = {
 };
 
 type Mark = {
+  category?: string;
+  example?: string;
   note: string;
   type: "correction" | "focus" | "praise";
 };
@@ -19,6 +21,25 @@ function splitSentences(draft: string) {
 }
 
 function getSentenceMarks(sentence: string, report: MockReport, index: number): Mark[] {
+  if (report.teacherMarks?.length) {
+    const sentenceText = sentence.toLowerCase();
+    const aiMarks = report.teacherMarks
+      .filter((mark) => {
+        const markText = mark.text.toLowerCase();
+        return sentenceText.includes(markText) || markText.includes(sentenceText.slice(0, Math.min(48, sentenceText.length)));
+      })
+      .map((mark) => ({
+        category: mark.category,
+        example: mark.example,
+        note: mark.note,
+        type: mark.type,
+      }));
+
+    if (aiMarks.length > 0) {
+      return aiMarks.slice(0, 2);
+    }
+  }
+
   const marks: Mark[] = [];
   const focus = report.focus.toLowerCase();
 
@@ -83,7 +104,7 @@ function getSentenceMarks(sentence: string, report: MockReport, index: number): 
 
 export function TeacherMarkedDraft({ draft, report }: TeacherMarkedDraftProps) {
   const sentences = splitSentences(draft);
-  const teacherSummary = report.revisionSuggestions[0]?.suggestion ?? report.weakest.note;
+  const teacherSummary = `${report.overall} Main next step: ${report.revisionSuggestions[0]?.suggestion ?? report.weakest.note}`;
 
   return (
     <section className="panel teacher-markup-panel">
@@ -105,7 +126,9 @@ export function TeacherMarkedDraft({ draft, report }: TeacherMarkedDraftProps) {
                   <em>
                     {marks.map((mark) => (
                       <strong className={`teacher-note ${mark.type}`} key={`${sentence}-${mark.note}`}>
+                        {mark.category ? `${mark.category}: ` : ""}
                         {mark.note}
+                        {mark.example ? <small>{mark.example}</small> : null}
                       </strong>
                     ))}
                   </em>

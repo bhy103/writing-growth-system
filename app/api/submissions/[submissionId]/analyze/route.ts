@@ -18,12 +18,13 @@ function createAnalysisData(report: Awaited<ReturnType<typeof analyzeWritingWith
     focusDimension: report.focus,
     strongestDimension: report.strongest.name,
     weakestDimension: report.weakest.name,
-    rubricJson: {
-      dimensions: report.dimensions,
-      highlightSentences: report.highlightSentences,
-      revisionSuggestions: report.revisionSuggestions,
-      nextExercises: report.nextExercises,
-    },
+      rubricJson: {
+        dimensions: report.dimensions,
+        highlightSentences: report.highlightSentences,
+        revisionSuggestions: report.revisionSuggestions,
+        nextExercises: report.nextExercises,
+        teacherMarks: report.teacherMarks,
+      },
     studentFeedback: report.weakest.note,
     parentSummaryZh,
   };

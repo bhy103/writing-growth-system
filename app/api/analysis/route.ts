@@ -37,6 +37,7 @@ export async function POST(request: Request) {
         highlightSentences: report.highlightSentences,
         revisionSuggestions: report.revisionSuggestions,
         nextExercises: report.nextExercises,
+        teacherMarks: report.teacherMarks,
       },
       studentFeedback: report.weakest.note,
       parentSummaryZh: analysis.parentSummaryZh,

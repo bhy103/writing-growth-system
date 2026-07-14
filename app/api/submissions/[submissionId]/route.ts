@@ -96,6 +96,9 @@ function buildReport(submission: {
             difficulty: "easy",
           },
         ],
+    teacherMarks: Array.isArray(rubricRecord.teacherMarks)
+      ? (rubricRecord.teacherMarks as MockReport["teacherMarks"])
+      : [],
   };
 }
 
