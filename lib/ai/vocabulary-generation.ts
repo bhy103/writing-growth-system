@@ -173,6 +173,10 @@ function buildPrompt({ gradeLevel, title, words }: { gradeLevel?: string | null;
     "Section 2 Multiple Choice must contain exactly Y questions.",
     "Section 3 Matching must contain exactly X questions.",
     "Section 1: one question for each meaning, shuffled, do not include the target word, use blank __________.",
+    "Section 1 must not reveal the answer in brackets, parentheses, word banks, hints, or labels.",
+    "Bad Section 1 example: The story has a clear __________. (narration)",
+    "Good Section 1 example: The story has a clear __________.",
+    "Do not add any answer-like text after a fill-in-the-blank question.",
     "Section 2: one question for each meaning, four options A-D, balanced correct answers, shuffled order.",
     "Section 3: each word appears once, match to its main/common meaning, mixed answer order.",
     "Answer key must follow the same order as the worksheet.",
@@ -187,8 +191,61 @@ function buildPrompt({ gradeLevel, title, words }: { gradeLevel?: string | null;
   ].join("\n");
 }
 
+function normalizeAnswerValue(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function lineRevealsAnswer(line: string, answerValues: Set<string>) {
+  const parentheticalMatches = line.match(/\(([^)]+)\)/g) ?? [];
+
+  return parentheticalMatches.some((match) => {
+    const value = normalizeAnswerValue(match.slice(1, -1));
+    return answerValues.has(value);
+  });
+}
+
+function stripAnswerParentheses(line: string, answerValues: Set<string>) {
+  return line.replace(/\s*\(([^)]+)\)/g, (match, value: string) => {
+    return answerValues.has(normalizeAnswerValue(value)) ? "" : match;
+  });
+}
+
+function removeFillBlankAnswerLeaks(worksheet: string, words: string[]) {
+  const answerValues = new Set(words.map(normalizeAnswerValue));
+  let isFillBlankSection = false;
+
+  return worksheet
+    .split(/\r?\n/)
+    .map((line) => {
+      if (/section\s*1/i.test(line) && /fill/i.test(line) && /blank/i.test(line)) {
+        isFillBlankSection = true;
+        return line;
+      }
+
+      if (/section\s*2/i.test(line) || /multiple\s*choice/i.test(line)) {
+        isFillBlankSection = false;
+        return line;
+      }
+
+      if (!isFillBlankSection) {
+        return line;
+      }
+
+      if (/^\s*\([^)]+\)\s*$/.test(line) && lineRevealsAnswer(line, answerValues)) {
+        return "";
+      }
+
+      return stripAnswerParentheses(line, answerValues);
+    })
+    .filter((line, index, lines) => !(line === "" && lines[index - 1] === ""))
+    .join("\n")
+    .trim();
+}
+
 function normalizePack(raw: RawVocabularyStudyPack, words: string[], fallbackTitle: string): VocabularyStudyPack {
   const fallback = buildFallbackPack(words, fallbackTitle);
+  const rawWorksheet =
+    typeof raw.worksheet === "string" && raw.worksheet.trim() ? raw.worksheet.trim() : fallback.worksheet;
 
   return {
     title: typeof raw.title === "string" && raw.title.trim() ? raw.title.trim() : fallback.title,
@@ -196,7 +253,7 @@ function normalizePack(raw: RawVocabularyStudyPack, words: string[], fallbackTit
       typeof raw.vocabularySection === "string" && raw.vocabularySection.trim()
         ? raw.vocabularySection.trim()
         : fallback.vocabularySection,
-    worksheet: typeof raw.worksheet === "string" && raw.worksheet.trim() ? raw.worksheet.trim() : fallback.worksheet,
+    worksheet: removeFillBlankAnswerLeaks(rawWorksheet, words),
     answerKey: typeof raw.answerKey === "string" && raw.answerKey.trim() ? raw.answerKey.trim() : fallback.answerKey,
     wordCount: typeof raw.wordCount === "number" && Number.isFinite(raw.wordCount) ? raw.wordCount : fallback.wordCount,
     meaningCount:
