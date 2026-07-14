@@ -246,7 +246,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     setView("upload-review");
   }
 
-  async function saveUploadedSource() {
+  async function saveUploadedSource(confirmed?: { content?: string; title?: string }) {
     if (!uploadedSource) {
       setUploadSaveStatus("error");
       setUploadSaveMessage("Please choose a source file from New Writing.");
@@ -254,16 +254,17 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
     }
 
     const fallbackTitle = getNextLocalUntitledTitle(snapshot.history);
-    const requestedTitle = uploadTitle.trim();
+    const confirmedContent = confirmed?.content?.trim() ?? "";
+    const requestedTitle = (confirmed?.title ?? uploadTitle).trim();
     setUploadSaveStatus("saving");
     setUploadSaveMessage("");
 
     try {
       const formData = new FormData();
       formData.set("title", requestedTitle);
-      formData.set("content", "");
+      formData.set("content", confirmedContent);
       formData.set("uploadMethod", uploadedSource.method);
-      formData.set("extractedText", "");
+      formData.set("extractedText", confirmedContent);
       formData.set("file", uploadedSource.file);
 
       const response = await fetch("/api/submissions", {
@@ -278,7 +279,7 @@ export function useWritingPrototypeState(initialView: View = "dashboard") {
 
       const savedSubmissionId = result.submission.id;
       const savedTitle = typeof result.submission.title === "string" ? result.submission.title : requestedTitle || fallbackTitle;
-      const extractedText = typeof result.extractedText === "string" ? result.extractedText : "";
+      const extractedText = confirmedContent || (typeof result.extractedText === "string" ? result.extractedText : "");
       setCurrentSubmissionId(savedSubmissionId);
       setUploadSaveStatus("saved");
       setUploadSaveMessage(

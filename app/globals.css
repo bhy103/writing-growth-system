@@ -1265,6 +1265,21 @@ textarea {
   gap: 18px;
 }
 
+.upload-review-hero {
+  margin-bottom: 20px;
+}
+
+.upload-review-hero h2 {
+  margin: 4px 0 6px;
+  font-size: clamp(36px, 5vw, 62px);
+}
+
+.upload-review-hero p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+  font-size: 20px;
+}
+
 .upload-preview-panel {
   align-self: start;
 }
@@ -1305,6 +1320,29 @@ textarea {
   object-fit: contain;
   border-radius: 8px;
   background: var(--surface-muted);
+}
+
+.recognised-text-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.recognised-panel-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.recognised-panel-header span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.recognised-textarea {
+  min-height: 360px;
+  font-size: 20px;
+  line-height: 1.7;
 }
 
 .quality-list {
