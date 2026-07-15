@@ -1385,19 +1385,23 @@ a {
 
 .submission-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  max-width: 760px;
 }
 
 .submission-option {
   display: grid;
-  gap: 8px;
-  min-height: 132px;
+  grid-template-columns: 38px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: center;
+  min-height: 82px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   color: var(--ink);
-  padding: 16px;
+  padding: 14px;
   text-align: left;
 }
 
@@ -1417,6 +1421,7 @@ button.submission-option {
 }
 
 .submission-option small {
+  grid-column: 2;
   color: var(--muted);
 }
 

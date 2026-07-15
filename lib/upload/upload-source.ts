@@ -9,6 +9,7 @@ export const maxUploadSize = 10 * 1024 * 1024;
 
 export const documentAccept =
   ".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain";
+export const writingUploadAccept = `${documentAccept},image/*,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif`;
 
 export function formatFileSize(size: number) {
   if (size < 1024 * 1024) {
@@ -46,4 +47,12 @@ export function validateUploadFile(method: UploadMethod, file: File) {
   }
 
   return "";
+}
+
+export function detectUploadMethod(file: File): UploadMethod {
+  if (file.type.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i.test(file.name)) {
+    return "image";
+  }
+
+  return "document";
 }

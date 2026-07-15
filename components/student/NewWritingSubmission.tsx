@@ -1,7 +1,7 @@
 import { type ChangeEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { type AnalysisStatus, type DraftSaveStatus } from "@/hooks/useWritingPrototypeState";
-import { documentAccept, type UploadMethod, validateUploadFile } from "@/lib/upload/upload-source";
+import { detectUploadMethod, type UploadMethod, validateUploadFile, writingUploadAccept } from "@/lib/upload/upload-source";
 
 type NewWritingSubmissionProps = {
   title: string;
@@ -30,28 +30,15 @@ export function NewWritingSubmission({
 }: NewWritingSubmissionProps) {
   const isSaving = saveStatus === "saving";
   const isAnalyzing = analysisStatus === "analyzing";
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const documentInputRef = useRef<HTMLInputElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState("");
 
-  function chooseFile(method: UploadMethod) {
+  function chooseFile() {
     setUploadError("");
-
-    if (method === "photo") {
-      photoInputRef.current?.click();
-      return;
-    }
-
-    if (method === "image") {
-      imageInputRef.current?.click();
-      return;
-    }
-
-    documentInputRef.current?.click();
+    uploadInputRef.current?.click();
   }
 
-  function handleFileChange(method: UploadMethod, event: ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
 
@@ -59,6 +46,7 @@ export function NewWritingSubmission({
       return;
     }
 
+    const method = detectUploadMethod(file);
     const validationError = validateUploadFile(method, file);
 
     if (validationError) {
@@ -80,59 +68,24 @@ export function NewWritingSubmission({
             <Link className="submission-option selected" data-testid="submission-typed" href="/workspace/new-writing">
               <span className="option-icon">T</span>
               <strong>Type directly</strong>
-              <small>Available in first MVP</small>
+              <small>Write or paste the draft here</small>
             </Link>
             <button
               className="submission-option placeholder"
-              data-testid="submission-photo"
-              onClick={() => chooseFile("photo")}
+              data-testid="submission-upload"
+              onClick={chooseFile}
               type="button"
             >
-              <span className="option-icon">C</span>
-              <strong>Take photo</strong>
-              <small>Choose a camera image</small>
-            </button>
-            <button
-              className="submission-option placeholder"
-              data-testid="submission-image"
-              onClick={() => chooseFile("image")}
-              type="button"
-            >
-              <span className="option-icon">I</span>
-              <strong>Upload image</strong>
-              <small>Choose JPG, PNG, WebP, or HEIC</small>
-            </button>
-            <button
-              className="submission-option placeholder"
-              data-testid="submission-document"
-              onClick={() => chooseFile("document")}
-              type="button"
-            >
-              <span className="option-icon">D</span>
-              <strong>Upload document</strong>
-              <small>Choose PDF, Word, or TXT</small>
+              <span className="option-icon">U</span>
+              <strong>Upload file</strong>
+              <small>Photo, image, PDF, Word, or TXT</small>
             </button>
           </div>
           <input
-            ref={photoInputRef}
-            accept="image/*"
-            capture="environment"
+            ref={uploadInputRef}
+            accept={writingUploadAccept}
             className="visually-hidden-file"
-            onChange={(event) => handleFileChange("photo", event)}
-            type="file"
-          />
-          <input
-            ref={imageInputRef}
-            accept="image/*"
-            className="visually-hidden-file"
-            onChange={(event) => handleFileChange("image", event)}
-            type="file"
-          />
-          <input
-            ref={documentInputRef}
-            accept={documentAccept}
-            className="visually-hidden-file"
-            onChange={(event) => handleFileChange("document", event)}
+            onChange={handleFileChange}
             type="file"
           />
           {uploadError && <p className="form-message error">{uploadError}</p>}
