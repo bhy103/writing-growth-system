@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { classifyMathProblem } from "@/lib/ai/math-problem-classification";
 import { apiErrorResponse } from "@/lib/api/error-response";
 import { requireCurrentStudentProfile } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import {
-  buildPendingStoragePath,
   buildStoredUploadPath,
   isObjectStorageConfigured,
   uploadFileToConfiguredStorage,
@@ -20,6 +20,14 @@ function normalizeCategory(value: string) {
   return value.trim().replace(/\s+/g, " ").slice(0, 80) || "General";
 }
 
+function splitTextProblems(input: string) {
+  return input
+    .split(/\n\s*\n+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 20);
+}
+
 function createDefaultTitle(sequenceNumber: number) {
   return `Math Problem ${String(sequenceNumber).padStart(3, "0")}`;
 }
@@ -29,8 +37,8 @@ function serializeProblem(problem: {
   title: string;
   category: string;
   notes: string | null;
-  fileName: string;
-  fileType: string;
+  fileName: string | null;
+  fileType: string | null;
   fileSize: number | null;
   createdAt: Date;
 }) {
@@ -57,6 +65,7 @@ export async function GET() {
         title: true,
         category: true,
         notes: true,
+        problemText: true,
         fileName: true,
         fileType: true,
         fileSize: true,
@@ -75,14 +84,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const file = formData.get("file");
+    const files = formData.getAll("files").filter((value): value is File => value instanceof File && value.size > 0);
+    const legacyFile = formData.get("file");
+    const allFiles = [...files, ...(legacyFile instanceof File && legacyFile.size > 0 ? [legacyFile] : [])].slice(0, 20);
+    const textProblems = splitTextProblems(getFormText(formData, "problemText"));
 
-    if (!(file instanceof File) || file.size === 0) {
-      return NextResponse.json({ message: "Please choose a math problem image first." }, { status: 400 });
+    if (allFiles.length === 0 && textProblems.length === 0) {
+      return NextResponse.json({ message: "Please paste a math question or add at least one image." }, { status: 400 });
     }
 
-    if (!supportedImageTypes.has(file.type)) {
-      return NextResponse.json({ message: "Please upload a JPG or PNG image for the math problem." }, { status: 400 });
+    if (allFiles.some((file) => !supportedImageTypes.has(file.type))) {
+      return NextResponse.json({ message: "Please upload JPG or PNG images for math problems." }, { status: 400 });
     }
 
     const student = await requireCurrentStudentProfile();
@@ -92,55 +104,100 @@ export async function POST(request: Request) {
         studentId: student.id,
       },
     });
-    const title = getFormText(formData, "title") || createDefaultTitle(existingCount + 1);
-    const category = normalizeCategory(getFormText(formData, "category"));
+    const requestedTitle = getFormText(formData, "title");
+    const requestedCategory = getFormText(formData, "category");
     const notes = getFormText(formData, "notes");
-    let storagePath = buildPendingStoragePath({
-      fileName: file.name,
-      studentId: student.id,
-    });
 
-    if (!isObjectStorageConfigured()) {
+    if (allFiles.length > 0 && !isObjectStorageConfigured()) {
       return NextResponse.json(
         { message: "File storage is not configured. Please check Supabase storage variables." },
         { status: 500 },
       );
     }
 
-    storagePath = buildStoredUploadPath({
-      fileName: file.name,
-      studentId: student.id,
-    });
-    await uploadFileToConfiguredStorage({
-      file,
-      storagePath,
-    });
+    const createdProblems = [];
+    let sequence = existingCount;
 
-    const problem = await prisma.mathProblem.create({
-      data: {
-        studentId: student.id,
-        title: title.slice(0, 120),
-        category,
-        notes: notes || null,
+    for (const file of allFiles) {
+      sequence += 1;
+      const fallbackTitle = requestedTitle || createDefaultTitle(sequence);
+      const classification = await classifyMathProblem({
+        fallbackTitle,
+        file,
+      });
+      const storagePath = buildStoredUploadPath({
         fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
+        studentId: student.id,
+      });
+      await uploadFileToConfiguredStorage({
+        file,
         storagePath,
-      },
-      select: {
-        id: true,
-        title: true,
-        category: true,
-        notes: true,
-        fileName: true,
-        fileType: true,
-        fileSize: true,
-        createdAt: true,
-      },
-    });
+      });
+
+      const problem = await prisma.mathProblem.create({
+        data: {
+          studentId: student.id,
+          title: requestedTitle || classification.title,
+          category: normalizeCategory(requestedCategory || classification.category),
+          notes: notes || null,
+          problemText: classification.problemText || null,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          storagePath,
+        },
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          notes: true,
+          fileName: true,
+          fileType: true,
+          fileSize: true,
+          createdAt: true,
+        },
+      });
+
+      createdProblems.push(problem);
+    }
+
+    for (const problemText of textProblems) {
+      sequence += 1;
+      const fallbackTitle = requestedTitle || createDefaultTitle(sequence);
+      const classification = await classifyMathProblem({
+        fallbackTitle,
+        text: problemText,
+      });
+      const problem = await prisma.mathProblem.create({
+        data: {
+          studentId: student.id,
+          title: requestedTitle || classification.title,
+          category: normalizeCategory(requestedCategory || classification.category),
+          notes: notes || null,
+          problemText: classification.problemText || problemText,
+          fileName: null,
+          fileType: null,
+          fileSize: null,
+          storagePath: null,
+        },
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          notes: true,
+          fileName: true,
+          fileType: true,
+          fileSize: true,
+          createdAt: true,
+        },
+      });
+
+      createdProblems.push(problem);
+    }
 
     return NextResponse.json({
-      problem: serializeProblem(problem),
+      problem: createdProblems[0] ? serializeProblem(createdProblems[0]) : null,
+      problems: createdProblems.map(serializeProblem),
     });
   } catch (error) {
     return apiErrorResponse(error);

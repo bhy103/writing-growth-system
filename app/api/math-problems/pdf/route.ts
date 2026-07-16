@@ -25,6 +25,7 @@ export async function GET(request: Request) {
         title: true,
         category: true,
         notes: true,
+        problemText: true,
         fileName: true,
         fileType: true,
         storagePath: true,
@@ -38,15 +39,16 @@ export async function GET(request: Request) {
 
     const pdfItems = await Promise.all(
       problems.map(async (problem) => {
-        const blob = await downloadFileFromConfiguredStorage(problem.storagePath);
+        const blob = problem.storagePath ? await downloadFileFromConfiguredStorage(problem.storagePath) : null;
         return {
           title: problem.title,
           category: problem.category,
           createdAt: problem.createdAt,
           fileName: problem.fileName,
           fileType: problem.fileType,
-          imageBytes: await blob.arrayBuffer(),
+          imageBytes: blob ? await blob.arrayBuffer() : undefined,
           notes: problem.notes,
+          problemText: problem.problemText,
         };
       }),
     );

@@ -4,10 +4,11 @@ type MathProblemPdfItem = {
   title: string;
   category: string;
   createdAt: Date;
-  fileName: string;
-  fileType: string;
-  imageBytes: ArrayBuffer;
+  fileName?: string | null;
+  fileType?: string | null;
+  imageBytes?: ArrayBuffer;
   notes?: string | null;
+  problemText?: string | null;
 };
 
 type MathProblemPdfInput = {
@@ -119,7 +120,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
     });
     y -= 22;
 
-    page.drawText(`${problem.category} | ${formatDate(problem.createdAt)} | ${problem.fileName}`, {
+    page.drawText(`${problem.category} | ${formatDate(problem.createdAt)}${problem.fileName ? ` | ${problem.fileName}` : ""}`, {
       x: margin,
       y,
       size: 9,
@@ -142,7 +143,8 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       y -= 4;
     }
 
-    try {
+    if (problem.imageBytes) {
+      try {
       const image =
         problem.fileType === "image/png"
           ? await pdf.embedPng(problem.imageBytes)
@@ -167,7 +169,43 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
         width: scaled.width,
         height: scaled.height,
       });
-    } catch {
+      } catch {
+        page.drawText("This image format could not be embedded in the PDF.", {
+          x: margin,
+          y: y - 24,
+          size: 12,
+          font: boldFont,
+          color: muted,
+        });
+      }
+      continue;
+    }
+
+    if (problem.problemText) {
+      page.drawRectangle({
+        x: margin - 1,
+        y: margin - 1,
+        width: pageWidth - margin * 2 + 2,
+        height: y - margin + 2,
+        borderColor: rgb(0.84, 0.88, 0.85),
+        borderWidth: 1,
+      });
+
+      for (const line of problem.problemText.split(/\r?\n/).flatMap((textLine) => splitLines(textLine, 82))) {
+        if (y < margin + 18) {
+          break;
+        }
+
+        page.drawText(line, {
+          x: margin + 12,
+          y: y - 20,
+          size: 12,
+          font: regularFont,
+          color: ink,
+        });
+        y -= 18;
+      }
+    } else {
       page.drawText("This image format could not be embedded in the PDF.", {
         x: margin,
         y: y - 24,

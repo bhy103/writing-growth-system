@@ -1,0 +1,5 @@
+ALTER TABLE "MathProblem" ADD COLUMN "problemText" TEXT;
+
+ALTER TABLE "MathProblem" ALTER COLUMN "fileName" DROP NOT NULL;
+ALTER TABLE "MathProblem" ALTER COLUMN "fileType" DROP NOT NULL;
+ALTER TABLE "MathProblem" ALTER COLUMN "storagePath" DROP NOT NULL;
