@@ -1265,6 +1265,11 @@ a {
   text-decoration: none;
 }
 
+.math-pdf-actions {
+  display: grid;
+  gap: 10px;
+}
+
 .disabled-link {
   opacity: 0.55;
   pointer-events: none;

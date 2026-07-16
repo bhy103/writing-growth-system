@@ -124,6 +124,7 @@ export function MathMistakeBook() {
     return ["All", ...values];
   }, [problems]);
   const visibleProblems = selectedCategory === "All" ? problems : problems.filter((problem) => problem.category === selectedCategory);
+  const visibleScreenshotProblems = visibleProblems.filter((problem) => problem.fileType?.startsWith("image/"));
 
   useEffect(() => {
     let isMounted = true;
@@ -261,13 +262,22 @@ export function MathMistakeBook() {
     `${visibleProblems.length}-${visibleProblems[0]?.createdAt ?? "empty"}-${lastBatchProblems.length}`,
   );
   const mathPdfEndpoint = "/api/math-problems/review-pdf";
+  const originalMathPdfEndpoint = "/api/math-problems/original-pdf";
   const pdfUrl =
     selectedCategory === "All"
       ? `${mathPdfEndpoint}?t=${pdfCacheKey}`
       : `${mathPdfEndpoint}?category=${encodeURIComponent(selectedCategory)}&t=${pdfCacheKey}`;
+  const originalPdfUrl =
+    selectedCategory === "All"
+      ? `${originalMathPdfEndpoint}?t=${pdfCacheKey}`
+      : `${originalMathPdfEndpoint}?category=${encodeURIComponent(selectedCategory)}&t=${pdfCacheKey}`;
   const lastBatchPdfUrl =
     lastBatchProblems.length > 0
       ? `${mathPdfEndpoint}?ids=${encodeURIComponent(lastBatchProblems.map((problem) => problem.id).join(","))}&t=${pdfCacheKey}`
+      : "";
+  const lastBatchOriginalPdfUrl =
+    lastBatchProblems.some((problem) => problem.fileType?.startsWith("image/"))
+      ? `${originalMathPdfEndpoint}?ids=${encodeURIComponent(lastBatchProblems.map((problem) => problem.id).join(","))}&t=${pdfCacheKey}`
       : "";
 
   return (
@@ -388,7 +398,12 @@ export function MathMistakeBook() {
             </button>
             {lastBatchPdfUrl && (
               <a className="secondary-button" href={lastBatchPdfUrl}>
-                Download this batch PDF
+                AI arranged PDF
+              </a>
+            )}
+            {lastBatchOriginalPdfUrl && (
+              <a className="secondary-button" href={lastBatchOriginalPdfUrl}>
+                Original screenshot PDF
               </a>
             )}
           </div>
@@ -414,10 +429,22 @@ export function MathMistakeBook() {
             ))}
           </select>
 
-          <a className={`primary-button math-pdf-link ${visibleProblems.length === 0 ? "disabled-link" : ""}`} href={pdfUrl}>
-            Download archive PDF
-          </a>
-          <p>{visibleProblems.length} problem{visibleProblems.length === 1 ? "" : "s"} in this PDF.</p>
+          <div className="math-pdf-actions">
+            <a className={`primary-button math-pdf-link ${visibleProblems.length === 0 ? "disabled-link" : ""}`} href={pdfUrl}>
+              AI arranged PDF
+            </a>
+            <a
+              className={`secondary-button math-pdf-link ${visibleScreenshotProblems.length === 0 ? "disabled-link" : ""}`}
+              href={originalPdfUrl}
+            >
+              Original screenshot PDF
+            </a>
+          </div>
+          <p>
+            {visibleProblems.length} saved problem{visibleProblems.length === 1 ? "" : "s"}.
+            {" "}
+            {visibleScreenshotProblems.length} screenshot{visibleScreenshotProblems.length === 1 ? "" : "s"} available.
+          </p>
         </aside>
       </section>
 

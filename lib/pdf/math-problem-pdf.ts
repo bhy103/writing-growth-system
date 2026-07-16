@@ -94,6 +94,20 @@ export function createMathProblemPdfFileName(category?: string | null) {
   return `${sanitizePdfFileName(base) || "math-mistakes"}.pdf`;
 }
 
+export function createMathOriginalScreenshotPdfFileName(category?: string | null) {
+  const date = new Intl.DateTimeFormat("en-AU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
+    .format(new Date())
+    .replace(/\//g, "-");
+  const base =
+    category && category !== "All" ? `original-math-screenshots-${category}-${date}` : `original-math-screenshots-${date}`;
+
+  return `${sanitizePdfFileName(base) || "original-math-screenshots"}.pdf`;
+}
+
 function splitLines(value: string, maxLength: number) {
   const words = safePdfText(value).split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -597,6 +611,121 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       }
 
       yCursor -= 10;
+    }
+  }
+
+  return Buffer.from(await pdf.save());
+}
+
+export async function createMathOriginalScreenshotPdf(input: MathProblemPdfInput) {
+  const pdf = await PDFDocument.create();
+  const regularFont = await embedMathFont(pdf);
+  const boldFont = regularFont;
+  const muted = rgb(0.39, 0.43, 0.48);
+  const ink = rgb(0.09, 0.13, 0.2);
+  const line = rgb(0.82, 0.78, 0.7);
+  const imageProblems = input.problems.filter((problem) => problem.imageBytes);
+
+  const cover = pdf.addPage([pageWidth, pageHeight]);
+  drawSafeText(cover, input.title, {
+    x: margin,
+    y: pageHeight - margin - 24,
+    size: 24,
+    font: boldFont,
+    color: ink,
+  });
+  drawSafeText(cover, input.subtitle, {
+    x: margin,
+    y: pageHeight - margin - 52,
+    size: 11,
+    font: regularFont,
+    color: muted,
+  });
+  drawSafeText(cover, `${imageProblems.length} original screenshot${imageProblems.length === 1 ? "" : "s"}`, {
+    x: margin,
+    y: pageHeight - margin - 84,
+    size: 14,
+    font: boldFont,
+    color: rgb(0.12, 0.43, 0.42),
+  });
+  drawSafeText(cover, "Original screenshot layout. The questions are not rewritten by AI.", {
+    x: margin,
+    y: pageHeight - margin - 112,
+    size: 10,
+    font: regularFont,
+    color: muted,
+  });
+
+  let page = pdf.addPage([pageWidth, pageHeight]);
+  let yCursor = pageHeight - margin;
+  const imageWidth = contentWidth - 18;
+  const minBottom = margin + 8;
+
+  for (const [index, problem] of imageProblems.entries()) {
+    try {
+      const image =
+        problem.fileType === "image/png" ? await pdf.embedPng(problem.imageBytes!) : await pdf.embedJpg(problem.imageBytes!);
+      const aspectRatio = image.height / image.width;
+      const preferredHeight = aspectRatio > 1.3 ? 520 : aspectRatio > 0.85 ? 390 : 270;
+      const maxAvailableHeight = pageHeight - margin * 2 - 34;
+      const scale = Math.min(imageWidth / image.width, preferredHeight / image.height, maxAvailableHeight / image.height);
+      const scaled = image.scale(scale);
+      const itemHeight = scaled.height + 38;
+
+      if (yCursor - itemHeight < minBottom) {
+        page = pdf.addPage([pageWidth, pageHeight]);
+        yCursor = pageHeight - margin;
+      }
+
+      const titleY = yCursor - 14;
+      drawSafeText(page, `${index + 1}. ${problem.title}`, {
+        x: margin,
+        y: titleY,
+        size: 10.5,
+        font: boldFont,
+        color: ink,
+      });
+
+      const imageX = margin + (contentWidth - scaled.width) / 2;
+      const imageY = titleY - 12 - scaled.height;
+      page.drawImage(image, {
+        x: imageX,
+        y: imageY,
+        width: scaled.width,
+        height: scaled.height,
+      });
+
+      page.drawLine({
+        start: { x: margin, y: imageY - 12 },
+        end: { x: margin + contentWidth, y: imageY - 12 },
+        color: line,
+        thickness: 0.55,
+      });
+
+      yCursor = imageY - 28;
+    } catch {
+      const itemHeight = 54;
+
+      if (yCursor - itemHeight < minBottom) {
+        page = pdf.addPage([pageWidth, pageHeight]);
+        yCursor = pageHeight - margin;
+      }
+
+      drawSafeText(page, `${index + 1}. ${problem.title}`, {
+        x: margin,
+        y: yCursor - 14,
+        size: 10.5,
+        font: boldFont,
+        color: ink,
+      });
+      drawSafeText(page, "This screenshot could not be embedded in the PDF.", {
+        x: margin,
+        y: yCursor - 34,
+        size: 9,
+        font: regularFont,
+        color: muted,
+      });
+      yCursor -= itemHeight;
     }
   }
 
