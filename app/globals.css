@@ -1273,11 +1273,27 @@ a {
 
 .math-pdf-edition {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 12px;
+  align-items: start;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfcfa;
+  cursor: pointer;
   padding: 14px;
+}
+
+.math-pdf-edition.selected {
+  border-color: var(--student-color);
+  background: color-mix(in srgb, var(--student-color) 7%, #ffffff);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--student-color) 12%, transparent);
+}
+
+.math-pdf-edition input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--student-color);
 }
 
 .math-pdf-edition div {
