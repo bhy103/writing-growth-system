@@ -73,6 +73,7 @@ model StudentProfile {
   gender         String?
   schoolName     String?
   nativeLanguage String?  @default("en")
+  themeColor     String   @default("#2f6f55")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

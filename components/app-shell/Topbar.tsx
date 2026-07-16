@@ -13,6 +13,7 @@ type TopbarProps = {
 export function Topbar({ activeView }: TopbarProps) {
   const router = useRouter();
   const { currentStudentId, email, students } = useWorkspaceAccount();
+  const accountInitial = email.slice(0, 1).toUpperCase();
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -33,7 +34,11 @@ export function Topbar({ activeView }: TopbarProps) {
             placement="topbar"
           />
         )}
-        {email && <span className="user-chip">{email}</span>}
+        {email && (
+          <span className="account-avatar" title={email} aria-label={`Account ${email}`}>
+            {accountInitial}
+          </span>
+        )}
         <button className="icon-button">EN</button>
         <Link className="icon-button" href="/workspace/settings" aria-label="Account settings">
           Settings

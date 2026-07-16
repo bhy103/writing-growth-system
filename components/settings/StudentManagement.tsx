@@ -21,6 +21,14 @@ const gradeOptions = [
   "Year 12",
 ];
 const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
+const themeColorOptions = [
+  "#2f6f55",
+  "#315f8c",
+  "#8a5a9f",
+  "#b5822f",
+  "#9f4f43",
+  "#3d6f7d",
+];
 
 type Student = {
   id: string;
@@ -28,6 +36,7 @@ type Student = {
   gender?: string | null;
   gradeLevel?: string | null;
   schoolName?: string | null;
+  themeColor: string;
 };
 
 export function StudentManagement() {
@@ -40,6 +49,7 @@ export function StudentManagement() {
   const [gender, setGender] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
   const [schoolName, setSchoolName] = useState("");
+  const [themeColor, setThemeColor] = useState(themeColorOptions[0]);
   const [message, setMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -88,6 +98,7 @@ export function StudentManagement() {
         gender,
         gradeLevel,
         schoolName,
+        themeColor,
       }),
     });
     const result = await response.json();
@@ -105,6 +116,7 @@ export function StudentManagement() {
     setGender("");
     setGradeLevel("");
     setSchoolName("");
+    setThemeColor(themeColorOptions[0]);
     setMessage("Student added and selected.");
     await loadStudents();
   }
@@ -119,6 +131,18 @@ export function StudentManagement() {
     router.refresh();
   }
 
+  async function updateThemeColor(studentId: string, nextThemeColor: string) {
+    setStudents((current) =>
+      current.map((student) => (student.id === studentId ? { ...student, themeColor: nextThemeColor } : student)),
+    );
+    await fetch("/api/students", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentId, themeColor: nextThemeColor }),
+    });
+    router.refresh();
+  }
+
   return (
     <section className="panel settings-panel">
       <p className="eyebrow">Students</p>
@@ -128,10 +152,25 @@ export function StudentManagement() {
         {students.map((student) => (
           <div className={`student-card ${student.id === currentStudentId ? "active" : ""}`} key={student.id}>
             <div>
-              <strong>{student.displayName}</strong>
+              <strong>
+                <span className="student-card-dot" style={{ background: student.themeColor }} aria-hidden="true" />
+                {student.displayName}
+              </strong>
               <span>
                 {[student.gradeLevel, student.gender, student.schoolName].filter(Boolean).join(" / ") || "Profile saved"}
               </span>
+              <div className="student-theme-picker" aria-label={`${student.displayName} theme colour`}>
+                {themeColorOptions.map((color) => (
+                  <button
+                    key={color}
+                    aria-label={`Use theme ${color}`}
+                    className={student.themeColor === color ? "active" : ""}
+                    onClick={() => updateThemeColor(student.id, color)}
+                    style={{ background: color }}
+                    type="button"
+                  />
+                ))}
+              </div>
             </div>
             <button className="secondary-button" disabled={student.id === currentStudentId} onClick={() => switchStudent(student.id)} type="button">
               {student.id === currentStudentId ? "Current" : "Select"}
@@ -183,6 +222,20 @@ export function StudentManagement() {
 
         <label htmlFor="new-student-school">School optional</label>
         <input id="new-student-school" onChange={(event) => setSchoolName(event.target.value)} value={schoolName} />
+
+        <label>Theme colour</label>
+        <div className="student-theme-picker large" aria-label="New student theme colour">
+          {themeColorOptions.map((color) => (
+            <button
+              key={color}
+              aria-label={`Use theme ${color}`}
+              className={themeColor === color ? "active" : ""}
+              onClick={() => setThemeColor(color)}
+              style={{ background: color }}
+              type="button"
+            />
+          ))}
+        </div>
 
         <button className="primary-button" disabled={isSaving} type="submit">
           {isSaving ? "Adding..." : "Add student"}

@@ -27,6 +27,7 @@ export default async function WorkspaceLayout({ children }: WorkspaceLayoutProps
       students={user.studentProfiles.map((student) => ({
         id: student.id,
         displayName: student.displayName,
+        themeColor: student.themeColor,
       }))}
     >
       {children}

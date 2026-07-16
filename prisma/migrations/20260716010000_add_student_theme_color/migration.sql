@@ -1,0 +1,1 @@
+ALTER TABLE "StudentProfile" ADD COLUMN "themeColor" TEXT NOT NULL DEFAULT '#2f6f55';

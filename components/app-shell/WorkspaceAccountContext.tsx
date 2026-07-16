@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, type ReactNode, useContext } from "react";
+import { createContext, type CSSProperties, type ReactNode, useContext } from "react";
 
 export type WorkspaceStudent = {
   id: string;
   displayName: string;
+  themeColor: string;
 };
 
 type WorkspaceAccountContextValue = {
@@ -29,9 +30,14 @@ export function WorkspaceAccountProvider({
   email,
   students,
 }: WorkspaceAccountProviderProps) {
+  const currentStudent = students.find((student) => student.id === currentStudentId) ?? students[0];
+  const themeColor = currentStudent?.themeColor ?? "#2f6f55";
+
   return (
     <WorkspaceAccountContext.Provider value={{ currentStudentId, email, students }}>
-      {children}
+      <div className="student-theme-shell" style={{ "--student-color": themeColor } as CSSProperties}>
+        {children}
+      </div>
     </WorkspaceAccountContext.Provider>
   );
 }

@@ -29,6 +29,16 @@ function parseOptionalDate(value: unknown) {
   return parsed;
 }
 
+function normalizeThemeColor(value: unknown) {
+  if (typeof value !== "string") {
+    return "#2f6f55";
+  }
+
+  const trimmed = value.trim();
+
+  return /^#[0-9a-fA-F]{6}$/.test(trimmed) ? trimmed : "#2f6f55";
+}
+
 export async function GET() {
   try {
     const user = await getCurrentUser();
@@ -50,6 +60,7 @@ export async function GET() {
         gender: student.gender,
         gradeLevel: student.gradeLevel,
         schoolName: student.schoolName,
+        themeColor: student.themeColor,
       })),
     });
   } catch (error) {
@@ -72,6 +83,7 @@ export async function POST(request: Request) {
     const gender = typeof body?.gender === "string" ? body.gender.trim() : "";
     const gradeLevel = typeof body?.gradeLevel === "string" ? body.gradeLevel.trim() : "";
     const schoolName = typeof body?.schoolName === "string" ? body.schoolName.trim() : "";
+    const themeColor = normalizeThemeColor(body?.themeColor);
 
     if (!firstName || !familyName) {
       return NextResponse.json({ message: "Please enter the student's first name and family name." }, { status: 400 });
@@ -88,10 +100,12 @@ export async function POST(request: Request) {
         gradeLevel: gradeLevel || null,
         schoolName: schoolName || null,
         nativeLanguage: "en",
+        themeColor,
       },
       select: {
         id: true,
         displayName: true,
+        themeColor: true,
       },
     });
 
@@ -103,6 +117,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: error.message }, { status: 400 });
     }
 
+    return apiErrorResponse(error);
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ message: "Please log in before updating a student." }, { status: 401 });
+    }
+
+    const body = await request.json().catch(() => null);
+    const studentId = typeof body?.studentId === "string" ? body.studentId : "";
+    const belongsToUser = user.studentProfiles.some((student) => student.id === studentId);
+
+    if (!studentId || !belongsToUser) {
+      return NextResponse.json({ message: "Please choose a valid student for this account." }, { status: 400 });
+    }
+
+    const student = await getPrisma().studentProfile.update({
+      where: {
+        id: studentId,
+      },
+      data: {
+        themeColor: normalizeThemeColor(body?.themeColor),
+      },
+      select: {
+        id: true,
+        themeColor: true,
+      },
+    });
+
+    return NextResponse.json({ student });
+  } catch (error) {
     return apiErrorResponse(error);
   }
 }

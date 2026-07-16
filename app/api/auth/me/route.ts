@@ -21,6 +21,7 @@ export async function GET() {
       students: user.studentProfiles.map((student) => ({
         id: student.id,
         displayName: student.displayName,
+        themeColor: student.themeColor,
       })),
       profileComplete: Boolean(user.accountProfile && user.studentProfiles.length > 0),
       role: user.role,

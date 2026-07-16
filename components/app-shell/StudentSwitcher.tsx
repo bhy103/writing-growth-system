@@ -6,6 +6,7 @@ import { useState } from "react";
 type StudentOption = {
   id: string;
   displayName: string;
+  themeColor?: string;
 };
 
 type StudentSwitcherProps = {
@@ -39,12 +40,16 @@ export function StudentSwitcher({
   }
 
   const currentStudent = initialStudents.find((student) => student.id === currentStudentId) ?? initialStudents[0];
+  const currentInitial = currentStudent.displayName.slice(0, 1).toUpperCase();
 
   if (initialStudents.length === 1) {
     return (
       <section className={`student-switcher ${placement}`} aria-label="Current student">
         {placement === "sidebar" && <span>Current student</span>}
-        <strong>{currentStudent.displayName}</strong>
+        <strong>
+          <span className="student-dot" aria-hidden="true">{currentInitial}</span>
+          {currentStudent.displayName}
+        </strong>
       </section>
     );
   }
@@ -52,13 +57,16 @@ export function StudentSwitcher({
   return (
     <section className={`student-switcher ${placement}`} aria-label="Current student">
       {placement === "sidebar" && <span>Current student</span>}
-      <select onChange={(event) => switchStudent(event.target.value)} value={currentStudentId}>
-        {initialStudents.map((student) => (
-          <option key={student.id} value={student.id}>
-            {student.displayName}
-          </option>
-        ))}
-      </select>
+      <label>
+        <span className="student-dot" aria-hidden="true">{currentInitial}</span>
+        <select onChange={(event) => switchStudent(event.target.value)} value={currentStudentId}>
+          {initialStudents.map((student) => (
+            <option key={student.id} value={student.id}>
+              {student.displayName}
+            </option>
+          ))}
+        </select>
+      </label>
     </section>
   );
 }
