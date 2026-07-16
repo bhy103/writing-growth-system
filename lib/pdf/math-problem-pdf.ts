@@ -26,6 +26,46 @@ const questionGap = 14;
 const compactQuestionHeight = 214;
 const largeQuestionHeight = 446;
 
+const unicodePdfReplacements: Record<string, string> = {
+  "\u2212": "-",
+  "\u2013": "-",
+  "\u2014": "-",
+  "\u00d7": "x",
+  "\u00f7": "/",
+  "\u221a": "sqrt",
+  "\u2264": "<=",
+  "\u2265": ">=",
+  "\u2260": "!=",
+  "\u2248": "~=",
+  "\u00b0": " degrees",
+  "\u00b2": "^2",
+  "\u00b3": "^3",
+  "\u2070": "^0",
+  "\u00b9": "^1",
+  "\u2074": "^4",
+  "\u2075": "^5",
+  "\u2076": "^6",
+  "\u2077": "^7",
+  "\u2078": "^8",
+  "\u2079": "^9",
+  "\u2080": "_0",
+  "\u2081": "_1",
+  "\u2082": "_2",
+  "\u2083": "_3",
+  "\u2084": "_4",
+  "\u2085": "_5",
+  "\u2086": "_6",
+  "\u2087": "_7",
+  "\u2088": "_8",
+  "\u2089": "_9",
+};
+
+function safePdfText(value: string) {
+  return value
+    .replace(/[−–—×÷√≤≥≠≈°²³⁰¹⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]/g, (character) => unicodePdfReplacements[character] ?? character)
+    .replace(/[^\x09\x0a\x0d\x20-\x7e]/g, "");
+}
+
 function sanitizePdfFileName(value: string) {
   return value
     .replace(/[^a-z0-9]+/gi, "-")
@@ -55,7 +95,7 @@ function formatDate(value: Date) {
 }
 
 function splitLines(value: string, maxLength: number) {
-  const words = value.split(/\s+/).filter(Boolean);
+  const words = safePdfText(value).split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let current = "";
 
@@ -106,7 +146,7 @@ function drawWrappedText({
   const lines = splitLines(text, widthChars).slice(0, maxLines);
 
   for (const line of lines) {
-    page.drawText(line, {
+    page.drawText(safePdfText(line), {
       x,
       y: nextY,
       size,
@@ -125,7 +165,7 @@ function estimateQuestionHeight(problem: MathProblemPdfItem) {
   }
 
   const lineCount = problem.problemText
-    ? problem.problemText
+    ? safePdfText(problem.problemText)
         .split(/\r?\n/)
         .flatMap((textLine) => splitLines(textLine, 58))
         .filter(Boolean).length
@@ -160,7 +200,7 @@ function drawQuestionLines({
   y: number;
 }) {
   const maxLines = height === largeQuestionHeight ? 18 : 8;
-  const text = problem.problemText?.trim();
+  const text = safePdfText(problem.problemText?.trim() ?? "");
 
   if (!text) {
     page.drawText("Question text was not extracted. Use the source image above for review.", {
@@ -206,14 +246,14 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
   const line = rgb(0.82, 0.78, 0.7);
 
   const cover = pdf.addPage([pageWidth, pageHeight]);
-  cover.drawText(input.title, {
+  cover.drawText(safePdfText(input.title), {
     x: margin,
     y: pageHeight - margin - 24,
     size: 24,
     font: boldFont,
     color: ink,
   });
-  cover.drawText(input.subtitle, {
+  cover.drawText(safePdfText(input.subtitle), {
     x: margin,
     y: pageHeight - margin - 52,
     size: 11,
@@ -259,7 +299,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       borderWidth: 0.7,
     });
 
-    page.drawText(`${index + 1}. ${problem.title}`, {
+    page.drawText(safePdfText(`${index + 1}. ${problem.title}`), {
       x: innerX,
       y: textY,
       size: 11,
@@ -268,7 +308,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
     });
     textY -= 15;
 
-    page.drawText(problem.category, {
+    page.drawText(safePdfText(problem.category), {
       x: innerX,
       y: textY,
       size: 8,
@@ -314,7 +354,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
             maxLines: 1,
             page,
             size: 8,
-            text: problem.problemText,
+            text: safePdfText(problem.problemText),
             widthChars: 80,
             x: innerX + 42,
             y: y + 34,
@@ -399,7 +439,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
     yCursor -= 28;
 
     for (const { index, problem } of answers) {
-      const answerLines = splitLines(problem.answerText ?? "", 86);
+      const answerLines = splitLines(safePdfText(problem.answerText ?? ""), 86);
       const neededHeight = 28 + answerLines.length * 13;
 
       if (yCursor - neededHeight < margin) {
@@ -407,7 +447,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
         yCursor = pageHeight - margin;
       }
 
-      page.drawText(`${index}. ${problem.title}`, {
+      page.drawText(safePdfText(`${index}. ${problem.title}`), {
         x: margin,
         y: yCursor,
         size: 11,
@@ -417,7 +457,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       yCursor -= 15;
 
       for (const lineText of answerLines) {
-        page.drawText(lineText, {
+        page.drawText(safePdfText(lineText), {
           x: margin + 16,
           y: yCursor,
           size: 10,
