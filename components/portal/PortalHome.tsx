@@ -18,7 +18,7 @@ const workflowSteps = [
   },
 ];
 
-const subjectItems = ["Writing", "Vocabulary", "Math"];
+const subjectItems = ["Writing Coach", "Vocabulary Builder", "Math Mistake Book"];
 
 export function PortalHome() {
   return (
@@ -27,8 +27,8 @@ export function PortalHome() {
         <Link className="portal-brand" href="/">
           <span className="brand-mark">C</span>
           <div>
-            <strong>Family Coach System</strong>
-            <span>Personal learning coach for students</span>
+            <strong>Family AI Coach</strong>
+            <span>Premium learning support at home</span>
           </div>
         </Link>
         <nav className="portal-menu" aria-label="Portal navigation">
@@ -49,10 +49,10 @@ export function PortalHome() {
       <section className="portal-hero-stage">
         <div className="portal-hero-content">
           <p className="eyebrow">Personal Family Coach Platform</p>
-          <h1>One calm learning coach for every child at home.</h1>
+          <h1>A private AI coach for every learner in your family.</h1>
           <p>
-            A family learning system for Writing, Vocabulary, and Math, built around student work,
-            helpful feedback, short practice, and steady progress.
+            A refined learning workspace for Writing, Vocabulary, and Math, built around real
+            student work, teacher-style feedback, printable practice, and steady progress.
           </p>
           <div className="portal-cta-row">
             <Link className="primary-button large" href="/login">
@@ -64,32 +64,41 @@ export function PortalHome() {
           </div>
         </div>
 
-        <div className="hero-product-preview" aria-label="Workspace preview">
+        <div className="hero-product-preview premium-visual" aria-label="Family coach workspace preview">
+          <div className="premium-visual-photo" aria-hidden="true">
+            <div className="visual-tablet">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="visual-notebook">
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="visual-pencil" />
+          </div>
           <div className="hero-preview-top">
             <div>
-              <span>Current student</span>
+              <span>Current learner</span>
               <strong>Lena Pan</strong>
             </div>
-            <span className="status-pill">Ready</span>
-          </div>
-          <div className="hero-draft-card">
-            <span className="scene-line wide" />
-            <span className="scene-line" />
-            <span className="scene-line short" />
-            <strong>Today: Writing Coach</strong>
+            <span className="status-pill">Live workspace</span>
           </div>
           <div className="hero-feedback-grid">
             <div>
-              <span>Active subject</span>
+              <span>Today</span>
               <strong>Writing</strong>
             </div>
             <div>
-              <span>Next subject</span>
+              <span>Next pack</span>
               <strong>Vocabulary</strong>
             </div>
           </div>
           <div className="hero-note-card">
-            Each subject gives one practical next step for the student.
+            Upload real work, receive focused guidance, and keep every student&apos;s learning record
+            in one family account.
           </div>
         </div>
       </section>
@@ -101,7 +110,7 @@ export function PortalHome() {
         </div>
         <div>
           <strong>Subject-based</strong>
-          <span>Writing is live first, with Vocabulary and Math ready as dedicated spaces.</span>
+          <span>Writing, Vocabulary, and Math each have a dedicated workspace.</span>
         </div>
         <div>
           <strong>Progress-focused</strong>
@@ -114,8 +123,8 @@ export function PortalHome() {
           <p className="eyebrow">For Students</p>
           <h2>Move between subjects without losing the learning thread.</h2>
           <p>
-            Each subject has its own workspace, but the coaching style stays consistent: clear,
-            friendly, and focused on one next step.
+            Each subject has its own tools, but the experience stays consistent: clear feedback,
+            useful practice, printable review, and student-level progress.
           </p>
           <div className="skill-cloud">
             {subjectItems.map((item) => (
@@ -128,7 +137,7 @@ export function PortalHome() {
           <h3>Clear progress across the whole family.</h3>
           <p>
             The system helps families understand what each student is practicing, where they are
-            improving, and what the next small learning step should be.
+            improving, and what should be reviewed next.
           </p>
         </div>
       </section>
@@ -152,7 +161,7 @@ export function PortalHome() {
       <section className="portal-section product-preview-section" id="preview">
         <div className="section-heading">
           <p className="eyebrow">Workspace Preview</p>
-          <h2>A family coach workspace with subject-by-subject growth.</h2>
+          <h2>A polished workspace for subject-by-subject growth.</h2>
         </div>
         <div className="portal-product-frame">
           <div className="product-sidebar">
