@@ -22,11 +22,11 @@ const classificationSchema = {
     },
     problemText: {
       type: "string",
-      description: "The visible math question text transcribed from the image, or the pasted text. Include diagrams as short text descriptions when needed. Do not include the answer or worked solution here.",
+      description: "The clean student-facing question text transcribed from the image, or the pasted text. Include diagrams as short text descriptions when needed. Do not include handwritten answers, circled answers, plotted answer marks, corrections, or worked solutions here.",
     },
     answerText: {
       type: "string",
-      description: "Only the final answer, marked answer, or worked solution visible in the image/text. Leave empty if no answer is visible.",
+      description: "Only the final answer, handwritten mark, circled answer, plotted answer position, correction, or worked solution visible in the image/text. Leave empty if no answer is visible.",
     },
   },
 };
@@ -125,9 +125,10 @@ export async function classifyMathProblem({
         "Use one specific category, not a long sentence. Good examples: Fractions, Linear Equations, Area and Perimeter, Percentages, Ratios, Decimals, Place Value, Probability, Statistics, Geometry, Word Problems.",
         "If the image contains multiple questions, classify the main visible question.",
         "Transcribe the question text if possible. Do not solve the problem.",
-        "If the screenshot already includes an answer, correction mark, worked solution, or teacher solution, put that in answerText only.",
+        "If the screenshot already includes an answer, correction mark, worked solution, teacher solution, circled option, handwritten number, or a plotted point/line on a graph or number line, put that in answerText only.",
         "Keep problemText as the student-facing question. Do not put the answer inside problemText.",
-        "If there is a graph, coordinate plane, shape, table, or diagram, describe it briefly in problemText so the PDF still preserves what the student needs.",
+        "If there is a graph, coordinate plane, shape, table, number line, or diagram, describe the clean original diagram briefly in problemText so the PDF still preserves what the student needs.",
+        "If a number line asks the student to mark a value, describe the blank number line and target value in problemText, and put any already-drawn mark or position in answerText.",
       ].join("\n"),
     },
   ];

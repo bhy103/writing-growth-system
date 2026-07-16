@@ -49,6 +49,61 @@ function uniqueImageFiles(nextFiles: File[]) {
   return Array.from(uniqueFiles.values());
 }
 
+function createEnhancedFileName(fileName: string) {
+  const baseName = fileName.replace(/\.[^.]+$/, "") || "math-problem";
+  return `${baseName}-enhanced.png`;
+}
+
+async function enhanceWorksheetImage(file: File) {
+  if (typeof window === "undefined") {
+    return file;
+  }
+
+  const bitmap = await createImageBitmap(file);
+  const scale = bitmap.width < 1000 ? Math.min(2, 1200 / bitmap.width) : 1;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+
+  if (!context) {
+    bitmap.close();
+    return file;
+  }
+
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+
+  for (let index = 0; index < data.length; index += 4) {
+    const gray = data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
+    const contrasted = Math.max(0, Math.min(255, (gray - 128) * 1.28 + 138));
+    const cleaned = contrasted > 238 ? 255 : contrasted < 48 ? 0 : contrasted;
+    data[index] = cleaned;
+    data[index + 1] = cleaned;
+    data[index + 2] = cleaned;
+  }
+
+  context.putImageData(imageData, 0, 0);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/png", 0.95);
+  });
+
+  if (!blob) {
+    return file;
+  }
+
+  return new File([blob], createEnhancedFileName(file.name), {
+    lastModified: file.lastModified,
+    type: "image/png",
+  });
+}
+
 export function MathMistakeBook() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
@@ -100,8 +155,8 @@ export function MathMistakeBook() {
     fileInputRef.current?.click();
   }
 
-  function addFiles(nextFiles: File[]) {
-    const imageFiles = uniqueImageFiles(nextFiles);
+  async function addFiles(nextFiles: File[]) {
+    const imageFiles = await Promise.all(uniqueImageFiles(nextFiles).map((file) => enhanceWorksheetImage(file)));
     const existingKeys = new Set(files.map(createFileKey));
     const newImageFiles = imageFiles.filter((file) => !existingKeys.has(createFileKey(file)));
     const nextTotal = Math.min(files.length + newImageFiles.length, 24);
@@ -119,7 +174,7 @@ export function MathMistakeBook() {
     } else if (files.length + newImageFiles.length > 24) {
       setMessage(`Added ${nextTotal} images. A single batch can include up to 24 images.`);
     } else if (newImageFiles.length > 0) {
-      setMessage(`${newImageFiles.length} image${newImageFiles.length === 1 ? "" : "s"} added. Save to create a compact PDF pack.`);
+      setMessage(`${newImageFiles.length} image${newImageFiles.length === 1 ? "" : "s"} added and enhanced for print.`);
     }
   }
 
@@ -140,7 +195,7 @@ export function MathMistakeBook() {
 
     if (pastedFiles.length > 0) {
       event.preventDefault();
-      addFiles(pastedFiles);
+      void addFiles(pastedFiles);
     }
   }
 
@@ -277,14 +332,14 @@ export function MathMistakeBook() {
             accept="image/png,image/jpeg"
             className="hidden-file-input"
             multiple
-            onChange={(event) => addFiles(Array.from(event.target.files ?? []))}
+            onChange={(event) => void addFiles(Array.from(event.target.files ?? []))}
             type="file"
           />
 
           <button className="math-dropzone" onClick={chooseFile} type="button">
             <span>
               <strong>Add images</strong>
-              <small>Select multiple JPG or PNG screenshots, or paste images into the box above.</small>
+              <small>Select multiple JPG or PNG screenshots, or paste images into the box above. Images are cleaned for print.</small>
             </span>
           </button>
 
