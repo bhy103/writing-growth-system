@@ -115,7 +115,7 @@ export function MathMistakeBook() {
   const [problems, setProblems] = useState<MathProblem[]>([]);
   const [lastBatchProblems, setLastBatchProblems] = useState<MathProblem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedPdfEdition, setSelectedPdfEdition] = useState<"original" | "ai">("original");
+  const [useOriginalScreenshotPdf, setUseOriginalScreenshotPdf] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -280,8 +280,9 @@ export function MathMistakeBook() {
     lastBatchProblems.some((problem) => problem.fileType?.startsWith("image/"))
       ? `${originalMathPdfEndpoint}?ids=${encodeURIComponent(lastBatchProblems.map((problem) => problem.id).join(","))}&t=${pdfCacheKey}`
       : "";
-  const selectedPdfUrl = selectedPdfEdition === "original" ? originalPdfUrl : pdfUrl;
-  const selectedPdfIsAvailable = selectedPdfEdition === "original" ? visibleScreenshotProblems.length > 0 : visibleProblems.length > 0;
+  const selectedPdfUrl = useOriginalScreenshotPdf ? originalPdfUrl : pdfUrl;
+  const selectedPdfIsAvailable = useOriginalScreenshotPdf ? visibleScreenshotProblems.length > 0 : visibleProblems.length > 0;
+  const selectedBatchPdfUrl = useOriginalScreenshotPdf ? lastBatchOriginalPdfUrl : lastBatchPdfUrl;
 
   return (
     <div className="math-workspace">
@@ -399,14 +400,17 @@ export function MathMistakeBook() {
             <button className="primary-button large" disabled={isSaving} onClick={saveProblems} type="button">
               {isSaving ? "Classifying and saving..." : "Save and classify"}
             </button>
-            {lastBatchPdfUrl && (
-              <a className="secondary-button" href={lastBatchPdfUrl}>
-                Batch AI worksheet
-              </a>
-            )}
-            {lastBatchOriginalPdfUrl && (
-              <a className="secondary-button" href={lastBatchOriginalPdfUrl}>
-                Batch original screenshots
+            <label className="math-inline-checkbox">
+              <input
+                checked={useOriginalScreenshotPdf}
+                onChange={(event) => setUseOriginalScreenshotPdf(event.target.checked)}
+                type="checkbox"
+              />
+              <span>Original screenshot PDF</span>
+            </label>
+            {selectedBatchPdfUrl && (
+              <a className="secondary-button" href={selectedBatchPdfUrl}>
+                Download this batch PDF
               </a>
             )}
           </div>
@@ -432,43 +436,25 @@ export function MathMistakeBook() {
             ))}
           </select>
 
-          <div className="math-pdf-editions" role="radiogroup" aria-label="Choose PDF worksheet type">
-            <label className={`math-pdf-edition ${selectedPdfEdition === "original" ? "selected" : ""}`}>
-              <input
-                checked={selectedPdfEdition === "original"}
-                name="math-pdf-edition"
-                onChange={() => setSelectedPdfEdition("original")}
-                type="radio"
-              />
-              <div>
-                <span>Student choice</span>
-                <strong>Original screenshot worksheet</strong>
-                <p>Uses the saved screenshots as the questions. No answer key is added to this PDF.</p>
-              </div>
-            </label>
-
-            <label className={`math-pdf-edition ${selectedPdfEdition === "ai" ? "selected" : ""}`}>
-              <input
-                checked={selectedPdfEdition === "ai"}
-                name="math-pdf-edition"
-                onChange={() => setSelectedPdfEdition("ai")}
-                type="radio"
-              />
-              <div>
-                <span>Student choice</span>
-                <strong>AI arranged worksheet</strong>
-                <p>AI reads each question, groups the topic, and makes a clean practice PDF.</p>
-              </div>
-            </label>
-          </div>
+          <label className="math-pdf-toggle">
+            <input
+              checked={useOriginalScreenshotPdf}
+              onChange={(event) => setUseOriginalScreenshotPdf(event.target.checked)}
+              type="checkbox"
+            />
+            <span>
+              <strong>Original screenshot PDF</strong>
+              <small>Checked: stitch original screenshots with no answer key. Unchecked: use the AI arranged worksheet.</small>
+            </span>
+          </label>
 
           <a className={`primary-button math-pdf-link ${selectedPdfIsAvailable ? "" : "disabled-link"}`} href={selectedPdfUrl}>
-            Download selected PDF
+            Download archive PDF
           </a>
           <p>
-            {visibleProblems.length} saved problem{visibleProblems.length === 1 ? "" : "s"}.
-            {" "}
-            {visibleScreenshotProblems.length} screenshot{visibleScreenshotProblems.length === 1 ? "" : "s"} available.
+            {useOriginalScreenshotPdf
+              ? `${visibleScreenshotProblems.length} screenshot${visibleScreenshotProblems.length === 1 ? "" : "s"} in this PDF.`
+              : `${visibleProblems.length} problem${visibleProblems.length === 1 ? "" : "s"} in this PDF.`}
           </p>
         </aside>
       </section>

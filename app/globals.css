@@ -1265,6 +1265,48 @@ a {
   text-decoration: none;
 }
 
+.math-inline-checkbox,
+.math-pdf-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.math-inline-checkbox {
+  min-height: 44px;
+  padding: 0 14px;
+}
+
+.math-inline-checkbox input,
+.math-pdf-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--student-color);
+}
+
+.math-pdf-toggle {
+  align-items: flex-start;
+  padding: 12px;
+}
+
+.math-pdf-toggle span {
+  display: grid;
+  gap: 4px;
+}
+
+.math-pdf-toggle small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .math-pdf-actions,
 .math-pdf-editions {
   display: grid;
