@@ -31,6 +31,24 @@ function formatSize(value?: number | null) {
   return value >= 1024 * 1024 ? `${(value / 1024 / 1024).toFixed(1)} MB` : `${Math.round(value / 1024)} KB`;
 }
 
+function createFileKey(file: File) {
+  return `${file.name}-${file.type}-${file.size}`;
+}
+
+function uniqueImageFiles(nextFiles: File[]) {
+  const uniqueFiles = new Map<string, File>();
+
+  for (const file of nextFiles) {
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      continue;
+    }
+
+    uniqueFiles.set(createFileKey(file), file);
+  }
+
+  return Array.from(uniqueFiles.values());
+}
+
 export function MathMistakeBook() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
@@ -83,17 +101,25 @@ export function MathMistakeBook() {
   }
 
   function addFiles(nextFiles: File[]) {
-    const imageFiles = nextFiles.filter((nextFile) => ["image/jpeg", "image/png"].includes(nextFile.type));
-    const nextTotal = Math.min(files.length + imageFiles.length, 24);
+    const imageFiles = uniqueImageFiles(nextFiles);
+    const existingKeys = new Set(files.map(createFileKey));
+    const newImageFiles = imageFiles.filter((file) => !existingKeys.has(createFileKey(file)));
+    const nextTotal = Math.min(files.length + newImageFiles.length, 24);
 
-    setFiles((current) => [...current, ...imageFiles].slice(0, 24));
+    setFiles((current) => {
+      const currentKeys = new Set(current.map(createFileKey));
+      const uniqueNewFiles = imageFiles.filter((file) => !currentKeys.has(createFileKey(file)));
+      return [...current, ...uniqueNewFiles].slice(0, 24);
+    });
 
     if (nextFiles.length !== imageFiles.length) {
       setMessage("Only JPG and PNG images were added.");
-    } else if (files.length + imageFiles.length > 24) {
+    } else if (newImageFiles.length === 0 && imageFiles.length > 0) {
+      setMessage("This image is already in the current batch.");
+    } else if (files.length + newImageFiles.length > 24) {
       setMessage(`Added ${nextTotal} images. A single batch can include up to 24 images.`);
-    } else if (imageFiles.length > 0) {
-      setMessage(`${imageFiles.length} image${imageFiles.length === 1 ? "" : "s"} added. Save to create a compact PDF pack.`);
+    } else if (newImageFiles.length > 0) {
+      setMessage(`${newImageFiles.length} image${newImageFiles.length === 1 ? "" : "s"} added. Save to create a compact PDF pack.`);
     }
   }
 
@@ -109,10 +135,11 @@ export function MathMistakeBook() {
         .filter((item): item is File => Boolean(item)),
     ];
     const pastedFiles = Array.from(
-      new Map(rawPastedFiles.map((file) => [`${file.name}-${file.size}-${file.lastModified}`, file])).values(),
+      new Map(rawPastedFiles.map((file) => [createFileKey(file), file])).values(),
     );
 
     if (pastedFiles.length > 0) {
+      event.preventDefault();
       addFiles(pastedFiles);
     }
   }
