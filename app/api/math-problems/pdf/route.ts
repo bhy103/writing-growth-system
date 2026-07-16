@@ -5,7 +5,10 @@ import { getPrisma } from "@/lib/db/prisma";
 import { createMathProblemPdf, createMathProblemPdfFileName } from "@/lib/pdf/math-problem-pdf";
 import { downloadFileFromConfiguredStorage } from "@/lib/upload/upload-storage";
 
-const mathPdfVersion = "math-pdf-symbol-safe-2026-07-17";
+const mathPdfVersion = "math-pdf-force-dynamic-2026-07-17";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
@@ -90,6 +93,10 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    return apiErrorResponse(error);
+    const response = apiErrorResponse(error);
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("X-Math-Pdf-Version", mathPdfVersion);
+    return response;
   }
 }

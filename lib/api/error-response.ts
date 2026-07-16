@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
 
+function jsonError(body: Record<string, unknown>, status: number) {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      "Cache-Control": "no-store, max-age=0",
+      Pragma: "no-cache",
+    },
+  });
+}
+
 export function apiErrorResponse(error: unknown) {
   const detail = error instanceof Error ? error.message : "Unknown server error";
 
   if (detail.includes("Please log in")) {
-    return NextResponse.json({ message: detail }, { status: 401 });
+    return jsonError({ message: detail }, 401);
   }
 
   if (
@@ -13,22 +23,22 @@ export function apiErrorResponse(error: unknown) {
     detail.includes("Bucket not found") ||
     detail.includes("storage/v1")
   ) {
-    return NextResponse.json(
+    return jsonError(
       {
         message: "File storage failed. Please check the Supabase storage environment variables.",
         detail,
       },
-      { status: 500 },
+      500,
     );
   }
 
   if (detail.includes("WinAnsi") || detail.includes("cannot encode")) {
-    return NextResponse.json(
+    return jsonError(
       {
         message: "PDF generation failed. A math symbol could not be encoded in the PDF font.",
         detail,
       },
-      { status: 500 },
+      500,
     );
   }
 
@@ -46,22 +56,22 @@ export function apiErrorResponse(error: unknown) {
       detail.includes("image_url") ||
       detail.includes("vision");
 
-    return NextResponse.json(
+    return jsonError(
       {
         message: isExtractionError
           ? "AI text extraction failed. Please check the OpenAI API key and vision model settings."
           : "AI analysis failed. Please check the OpenAI API key and model settings.",
         detail,
       },
-      { status: 500 },
+      500,
     );
   }
 
-  return NextResponse.json(
+  return jsonError(
     {
       message: "Database request failed. Please check the deployment environment variables.",
       detail,
     },
-    { status: 500 },
+    500,
   );
 }
