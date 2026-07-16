@@ -979,6 +979,148 @@ a {
   white-space: pre-wrap;
 }
 
+.math-workspace {
+  display: grid;
+  gap: 18px;
+}
+
+.math-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+}
+
+.math-hero h2 {
+  margin: 0;
+  font-size: clamp(34px, 4.4vw, 58px);
+  line-height: 1.04;
+}
+
+.math-hero p:not(.eyebrow) {
+  max-width: 780px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.math-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.math-upload-panel,
+.math-archive-panel,
+.math-list-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.math-dropzone {
+  display: grid;
+  min-height: 260px;
+  width: 100%;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed #b9c8bd;
+  border-radius: 8px;
+  background: #f8fbf6;
+  color: var(--ink);
+  padding: 18px;
+  text-align: center;
+}
+
+.math-dropzone:hover {
+  border-color: var(--green);
+}
+
+.math-dropzone span {
+  display: grid;
+  gap: 6px;
+}
+
+.math-dropzone strong {
+  font-size: 20px;
+}
+
+.math-dropzone small,
+.math-file-note,
+.math-archive-panel p {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.math-dropzone img {
+  max-height: 360px;
+  max-width: 100%;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.math-pdf-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.disabled-link {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.math-problem-list {
+  display: grid;
+  gap: 10px;
+}
+
+.math-problem-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 14px;
+}
+
+.math-problem-row div {
+  display: grid;
+  gap: 5px;
+}
+
+.math-problem-row strong {
+  font-size: 18px;
+}
+
+.math-problem-row span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.math-problem-row > span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--green);
+  padding: 5px 9px;
+}
+
+.math-problem-row p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .topbar h1,
 .hero-band h2,
 .report-header h2 {
@@ -2519,6 +2661,7 @@ blockquote {
   .report-workspace-grid,
   .subject-plan-grid,
   .vocabulary-grid,
+  .math-grid,
   .dashboard-grid,
   .dashboard-report-grid,
   .revision-coach-panel,

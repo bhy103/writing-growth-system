@@ -79,6 +79,7 @@ model StudentProfile {
   user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   submissions WritingSubmission[]
   vocabularySets VocabularySet[]
+  mathProblems   MathProblem[]
 }
 
 model WritingSubmission {
@@ -150,5 +151,24 @@ model VocabularySet {
 
   student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
+  @@index([studentId, createdAt])
+}
+
+model MathProblem {
+  id          String   @id @default(cuid())
+  studentId   String
+  title       String
+  category    String
+  notes       String?
+  fileName    String
+  fileType    String
+  fileSize    Int?
+  storagePath String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, category, createdAt])
   @@index([studentId, createdAt])
 }
