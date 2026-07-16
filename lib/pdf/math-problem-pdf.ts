@@ -138,6 +138,12 @@ function estimateQuestionHeight(problem: MathProblemPdfItem) {
     return largeQuestionHeight;
   }
 
+  const text = problem.problemText ?? "";
+
+  if (hasNumberLinePrompt(text) || splitSubquestions(text).length > 1) {
+    return largeQuestionHeight;
+  }
+
   const lineCount = problem.problemText
     ? safePdfText(problem.problemText)
         .split(/\r?\n/)
@@ -152,10 +158,134 @@ function estimateQuestionHeight(problem: MathProblemPdfItem) {
   return compactQuestionHeight;
 }
 
+function hasNumberLinePrompt(value: string) {
+  return /\bnumber\s+line\b/i.test(value);
+}
+
+function splitSubquestions(value: string) {
+  const text = safePdfText(value).replace(/\s+/g, " ").trim();
+  const matches = Array.from(text.matchAll(/\b([a-h])\)\s*/gi));
+
+  if (matches.length < 2) {
+    return text ? [text] : [];
+  }
+
+  return matches
+    .map((match, index) => {
+      const start = match.index ?? 0;
+      const next = matches[index + 1];
+      const end = next?.index ?? text.length;
+      return text.slice(start, end).trim();
+    })
+    .filter(Boolean);
+}
+
+function drawAnswerLines({
+  count,
+  line,
+  page,
+  x,
+  y,
+  width,
+}: {
+  count: number;
+  line: ReturnType<typeof rgb>;
+  page: PDFPage;
+  x: number;
+  y: number;
+  width: number;
+}) {
+  let nextY = y;
+
+  for (let index = 0; index < count; index += 1) {
+    page.drawLine({
+      start: { x, y: nextY },
+      end: { x: x + width, y: nextY },
+      color: line,
+      thickness: 0.45,
+    });
+    nextY -= 19;
+  }
+
+  return nextY;
+}
+
+function drawBlankNumberLine({
+  font,
+  ink,
+  page,
+  x,
+  y,
+  width,
+}: {
+  font: PDFFont;
+  ink: ReturnType<typeof rgb>;
+  page: PDFPage;
+  x: number;
+  y: number;
+  width: number;
+}) {
+  const startX = x + 22;
+  const endX = x + width - 22;
+  const tickCount = 6;
+  const tickGap = (endX - startX) / tickCount;
+
+  page.drawLine({
+    start: { x: startX, y },
+    end: { x: endX, y },
+    color: ink,
+    thickness: 1,
+  });
+  page.drawLine({
+    start: { x: startX, y },
+    end: { x: startX + 8, y: y + 4 },
+    color: ink,
+    thickness: 1,
+  });
+  page.drawLine({
+    start: { x: startX, y },
+    end: { x: startX + 8, y: y - 4 },
+    color: ink,
+    thickness: 1,
+  });
+  page.drawLine({
+    start: { x: endX, y },
+    end: { x: endX - 8, y: y + 4 },
+    color: ink,
+    thickness: 1,
+  });
+  page.drawLine({
+    start: { x: endX, y },
+    end: { x: endX - 8, y: y - 4 },
+    color: ink,
+    thickness: 1,
+  });
+
+  for (let index = 0; index <= tickCount; index += 1) {
+    const tickX = startX + tickGap * index;
+    const label = String(index - 3);
+
+    page.drawLine({
+      start: { x: tickX, y: y - 4 },
+      end: { x: tickX, y: y + 4 },
+      color: ink,
+      thickness: 0.8,
+    });
+    page.drawText(label, {
+      x: tickX - (label.length > 1 ? 5 : 3),
+      y: y - 18,
+      size: 7,
+      font,
+      color: ink,
+    });
+  }
+}
+
 function drawQuestionLines({
   boldFont,
   height,
   ink,
+  line,
   muted,
   page,
   problem,
@@ -166,6 +296,7 @@ function drawQuestionLines({
   boldFont: PDFFont;
   height: number;
   ink: ReturnType<typeof rgb>;
+  line: ReturnType<typeof rgb>;
   muted: ReturnType<typeof rgb>;
   page: PDFPage;
   problem: MathProblemPdfItem;
@@ -187,22 +318,53 @@ function drawQuestionLines({
     return;
   }
 
-  drawWrappedText({
-    color: ink,
-    font: regularFont,
-    maxLines,
-    page,
-    size: 9.5,
-    text,
-    widthChars: 64,
-    x,
-    y,
-  });
+  const blocks = splitSubquestions(text);
+  let nextY = y;
+
+  for (const [blockIndex, block] of blocks.entries()) {
+    const hasNumberLine = hasNumberLinePrompt(block);
+    const blockMaxLines = hasNumberLine ? 5 : Math.max(3, Math.floor(maxLines / Math.max(blocks.length, 1)));
+
+    nextY = drawWrappedText({
+      color: ink,
+      font: regularFont,
+      maxLines: blockMaxLines,
+      page,
+      size: 9.5,
+      text: block,
+      widthChars: 74,
+      x,
+      y: nextY,
+    });
+    nextY -= 8;
+
+    if (hasNumberLine) {
+      drawBlankNumberLine({
+        font: regularFont,
+        ink,
+        page,
+        width: contentWidth - 48,
+        x,
+        y: nextY - 20,
+      });
+      nextY -= 62;
+    }
+
+    nextY = drawAnswerLines({
+      count: hasNumberLine ? 2 : 3,
+      line,
+      page,
+      width: contentWidth - 48,
+      x,
+      y: nextY,
+    });
+    nextY -= blockIndex === blocks.length - 1 ? 0 : 12;
+  }
 
   if (problem.answerText) {
-    page.drawText("Answer moved to the answer key.", {
+    page.drawText("Answer key at the end.", {
       x,
-      y: y - Math.min(maxLines, splitLines(text, 64).length) * 13 - 8,
+      y: Math.max(nextY - 4, y - height + 54),
       size: 8,
       font: boldFont,
       color: muted,
@@ -348,6 +510,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
         boldFont,
         height: questionHeight,
         ink,
+        line,
         muted,
         page,
         problem,
