@@ -1265,9 +1265,44 @@ a {
   text-decoration: none;
 }
 
-.math-pdf-actions {
+.math-pdf-actions,
+.math-pdf-editions {
   display: grid;
   gap: 10px;
+}
+
+.math-pdf-edition {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 14px;
+}
+
+.math-pdf-edition div {
+  display: grid;
+  gap: 5px;
+}
+
+.math-pdf-edition span {
+  color: var(--student-color);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.math-pdf-edition strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.math-pdf-edition p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .disabled-link {
