@@ -5,6 +5,8 @@ import { getPrisma } from "@/lib/db/prisma";
 import { createMathProblemPdf, createMathProblemPdfFileName } from "@/lib/pdf/math-problem-pdf";
 import { downloadFileFromConfiguredStorage } from "@/lib/upload/upload-storage";
 
+const mathPdfVersion = "math-pdf-symbol-safe-2026-07-17";
+
 export async function GET(request: Request) {
   try {
     const student = await requireCurrentStudentProfile();
@@ -83,6 +85,7 @@ export async function GET(request: Request) {
         "Cache-Control": "no-store, max-age=0",
         "Content-Disposition": `attachment; filename="${createMathProblemPdfFileName(ids.length > 0 ? "review-pack" : category || null)}"`,
         "Content-Type": "application/pdf",
+        "X-Math-Pdf-Version": mathPdfVersion,
         "Pragma": "no-cache",
       },
     });

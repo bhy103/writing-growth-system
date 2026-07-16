@@ -3,6 +3,8 @@ import { join } from "node:path";
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, type PDFFont, type PDFPage, rgb } from "pdf-lib";
 
+type DrawTextOptions = NonNullable<Parameters<PDFPage["drawText"]>[1]>;
+
 type MathProblemPdfItem = {
   title: string;
   category: string;
@@ -42,6 +44,27 @@ function safePdfText(value: string) {
     .replace(/\u03c0/g, "pi")
     .replace(/\u00b2/g, "^2")
     .replace(/\u00b3/g, "^3");
+}
+
+function asciiPdfText(value: string) {
+  return safePdfText(value)
+    .normalize("NFKD")
+    .replace(/[^\x20-\x7e]/g, "");
+}
+
+function drawSafeText(page: PDFPage, text: string, options: DrawTextOptions) {
+  try {
+    page.drawText(safePdfText(text), options);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "";
+
+    if (detail.includes("WinAnsi") || detail.includes("cannot encode")) {
+      page.drawText(asciiPdfText(text), options);
+      return;
+    }
+
+    throw error;
+  }
 }
 
 async function embedMathFont(pdf: PDFDocument) {
@@ -123,7 +146,7 @@ function drawWrappedText({
   const lines = splitLines(text, widthChars).slice(0, maxLines);
 
   for (const line of lines) {
-    page.drawText(safePdfText(line), {
+    drawSafeText(page, line, {
       x,
       y: nextY,
       size,
@@ -290,7 +313,7 @@ function drawBlankNumberLine({
       color: ink,
       thickness: 0.8,
     });
-    page.drawText(label, {
+    drawSafeText(page, label, {
       x: tickX - (label.length > 1 ? 5 : 3),
       y: y - 18,
       size: 7,
@@ -325,7 +348,7 @@ function drawQuestionLines({
   const text = cleanStudentQuestionText(problem.problemText?.trim() ?? "");
 
   if (!text) {
-    page.drawText("Question text was not extracted. Use the source image above for review.", {
+    drawSafeText(page, "Question text was not extracted. Use the source image above for review.", {
       x,
       y,
       size: 9,
@@ -389,28 +412,28 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
   const line = rgb(0.82, 0.78, 0.7);
 
   const cover = pdf.addPage([pageWidth, pageHeight]);
-  cover.drawText(safePdfText(input.title), {
+  drawSafeText(cover, input.title, {
     x: margin,
     y: pageHeight - margin - 24,
     size: 24,
     font: boldFont,
     color: ink,
   });
-  cover.drawText(safePdfText(input.subtitle), {
+  drawSafeText(cover, input.subtitle, {
     x: margin,
     y: pageHeight - margin - 52,
     size: 11,
     font: regularFont,
     color: muted,
   });
-  cover.drawText(`${input.problems.length} saved problem${input.problems.length === 1 ? "" : "s"}`, {
+  drawSafeText(cover, `${input.problems.length} saved problem${input.problems.length === 1 ? "" : "s"}`, {
     x: margin,
     y: pageHeight - margin - 84,
     size: 14,
     font: boldFont,
     color: green,
   });
-  cover.drawText("Printable review layout. Questions and answer key are separated for student practice.", {
+  drawSafeText(cover, "Printable review layout. Questions and answer key are separated for student practice.", {
     x: margin,
     y: pageHeight - margin - 112,
     size: 10,
@@ -442,7 +465,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       borderWidth: 0.7,
     });
 
-    page.drawText(safePdfText(`${index + 1}. ${problem.title}`), {
+    drawSafeText(page, `${index + 1}. ${problem.title}`, {
       x: innerX,
       y: textY,
       size: 11,
@@ -468,7 +491,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
         });
 
         if (problem.problemText) {
-          page.drawText("AI note:", {
+          drawSafeText(page, "AI note:", {
             x: innerX,
             y: y + 34,
             size: 8,
@@ -488,7 +511,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
           });
         }
       } catch {
-        page.drawText("Image could not be embedded.", {
+        drawSafeText(page, "Image could not be embedded.", {
           x: innerX,
           y: textY,
           size: 9,
@@ -520,7 +543,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
   if (answers.length > 0) {
     page = pdf.addPage([pageWidth, pageHeight]);
     yCursor = pageHeight - margin;
-    page.drawText("Answer Key", {
+    drawSafeText(page, "Answer Key", {
       x: margin,
       y: yCursor,
       size: 22,
@@ -528,7 +551,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       color: ink,
     });
     yCursor -= 30;
-    page.drawText("Answers are separated from the question pages so the student can practise first.", {
+    drawSafeText(page, "Answers are separated from the question pages so the student can practise first.", {
       x: margin,
       y: yCursor,
       size: 10,
@@ -546,7 +569,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
         yCursor = pageHeight - margin;
       }
 
-      page.drawText(safePdfText(`${index}. ${problem.title}`), {
+      drawSafeText(page, `${index}. ${problem.title}`, {
         x: margin,
         y: yCursor,
         size: 11,
@@ -556,7 +579,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       yCursor -= 15;
 
       for (const lineText of answerLines) {
-        page.drawText(safePdfText(lineText), {
+        drawSafeText(page, lineText, {
           x: margin + 16,
           y: yCursor,
           size: 10,

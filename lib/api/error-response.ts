@@ -22,6 +22,16 @@ export function apiErrorResponse(error: unknown) {
     );
   }
 
+  if (detail.includes("WinAnsi") || detail.includes("cannot encode")) {
+    return NextResponse.json(
+      {
+        message: "PDF generation failed. A math symbol could not be encoded in the PDF font.",
+        detail,
+      },
+      { status: 500 },
+    );
+  }
+
   if (
     detail.includes("OpenAI") ||
     detail.includes("openai") ||
