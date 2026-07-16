@@ -34,18 +34,20 @@ export function Topbar({ activeView }: TopbarProps) {
             placement="topbar"
           />
         )}
-        {email && (
-          <span className="account-avatar" title={email} aria-label={`Account ${email}`}>
-            {accountInitial}
-          </span>
-        )}
-        <button className="icon-button">EN</button>
-        <Link className="icon-button" href="/workspace/settings" aria-label="Account settings">
-          Settings
-        </Link>
-        <button className="secondary-button" onClick={logout} type="button">
-          Logout
-        </button>
+        <div className="topbar-control-group">
+          <button className="icon-button compact">EN</button>
+          <Link className="icon-button" href="/workspace/settings" aria-label="Account settings">
+            Settings
+          </Link>
+          <button className="secondary-button" onClick={logout} type="button">
+            Logout
+          </button>
+          {email && (
+            <span className="account-avatar" title={email} aria-label={`Account ${email}`}>
+              {accountInitial}
+            </span>
+          )}
+        </div>
       </div>
     </header>
   );
