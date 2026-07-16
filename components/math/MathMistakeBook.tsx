@@ -260,13 +260,14 @@ export function MathMistakeBook() {
   const pdfCacheKey = encodeURIComponent(
     `${visibleProblems.length}-${visibleProblems[0]?.createdAt ?? "empty"}-${lastBatchProblems.length}`,
   );
+  const mathPdfEndpoint = "/api/math-problems/review-pdf";
   const pdfUrl =
     selectedCategory === "All"
-      ? `/api/math-problems/pdf?t=${pdfCacheKey}`
-      : `/api/math-problems/pdf?category=${encodeURIComponent(selectedCategory)}&t=${pdfCacheKey}`;
+      ? `${mathPdfEndpoint}?t=${pdfCacheKey}`
+      : `${mathPdfEndpoint}?category=${encodeURIComponent(selectedCategory)}&t=${pdfCacheKey}`;
   const lastBatchPdfUrl =
     lastBatchProblems.length > 0
-      ? `/api/math-problems/pdf?ids=${encodeURIComponent(lastBatchProblems.map((problem) => problem.id).join(","))}&t=${pdfCacheKey}`
+      ? `${mathPdfEndpoint}?ids=${encodeURIComponent(lastBatchProblems.map((problem) => problem.id).join(","))}&t=${pdfCacheKey}`
       : "";
 
   return (
