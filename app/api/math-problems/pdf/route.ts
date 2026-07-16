@@ -80,8 +80,10 @@ export async function GET(request: Request) {
 
     return new Response(pdf, {
       headers: {
+        "Cache-Control": "no-store, max-age=0",
         "Content-Disposition": `attachment; filename="${createMathProblemPdfFileName(ids.length > 0 ? "review-pack" : category || null)}"`,
         "Content-Type": "application/pdf",
+        "Pragma": "no-cache",
       },
     });
   } catch (error) {
