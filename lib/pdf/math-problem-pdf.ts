@@ -30,7 +30,18 @@ const compactQuestionHeight = 214;
 const largeQuestionHeight = 446;
 
 function safePdfText(value: string) {
-  return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "");
+  return value
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "")
+    .replace(/\u221a\s*([0-9a-zA-Z]+)/g, "sqrt($1)")
+    .replace(/\u221a/g, "sqrt")
+    .replace(/\u2212/g, "-")
+    .replace(/\u00d7/g, "x")
+    .replace(/\u00f7/g, "/")
+    .replace(/\u2264/g, "<=")
+    .replace(/\u2265/g, ">=")
+    .replace(/\u03c0/g, "pi")
+    .replace(/\u00b2/g, "^2")
+    .replace(/\u00b3/g, "^3");
 }
 
 async function embedMathFont(pdf: PDFDocument) {
@@ -155,12 +166,13 @@ function hasNumberLinePrompt(value: string) {
 }
 
 function cleanStudentQuestionText(value: string) {
-  return safePdfText(value)
-    .replace(/\\\(\s*\\sqrt\{([^}]+)\}\s*\\\)/g, "√$1")
-    .replace(/\\sqrt\{([^}]+)\}/g, "√$1")
-    .replace(/-\s*sqrt\{([^}]+)\}/g, "-√$1")
-    .replace(/\\\(\s*-\s*\\sqrt\{([^}]+)\}\s*\\\)/g, "-√$1")
-    .replace(/\bsqrt\(([^)]+)\)/gi, "√$1")
+  const latexCleaned = value
+    .replace(/\\\(\s*\\sqrt\{([^}]+)\}\s*\\\)/g, "sqrt($1)")
+    .replace(/\\sqrt\{([^}]+)\}/g, "sqrt($1)")
+    .replace(/-\s*sqrt\{([^}]+)\}/g, "-sqrt($1)")
+    .replace(/\\\(\s*-\s*\\sqrt\{([^}]+)\}\s*\\\)/g, "-sqrt($1)");
+
+  return safePdfText(latexCleaned)
     .replace(/\bThe number line is (?:shown|marked|drawn)[^.]*\./gi, "")
     .replace(/\bIt is (?:shown|marked|drawn)[^.]*\./gi, "")
     .replace(/\bPoints? (?:are|were)?\s*(?:plotted|marked|labelled|labeled)[^.]*\./gi, "")
