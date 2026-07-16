@@ -11,11 +11,17 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const rawCategory = url.searchParams.get("category")?.trim() ?? "";
     const category = rawCategory && rawCategory !== "All" ? rawCategory : "";
+    const ids = (url.searchParams.get("ids") ?? "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean)
+      .slice(0, 60);
     const prisma = getPrisma();
     const problems = await prisma.mathProblem.findMany({
       where: {
         studentId: student.id,
         ...(category ? { category } : {}),
+        ...(ids.length > 0 ? { id: { in: ids } } : {}),
       },
       orderBy: {
         createdAt: "asc",
@@ -37,8 +43,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "No math problems found for this PDF." }, { status: 404 });
     }
 
+    const orderedProblems =
+      ids.length > 0
+        ? [...problems].sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
+        : problems;
+
     const pdfItems = await Promise.all(
-      problems.map(async (problem) => {
+      orderedProblems.map(async (problem) => {
         const blob = problem.storagePath ? await downloadFileFromConfiguredStorage(problem.storagePath) : null;
         return {
           title: problem.title,
@@ -60,14 +71,14 @@ export async function GET(request: Request) {
       year: "numeric",
     }).format(new Date());
     const pdf = await createMathProblemPdf({
-      title: category ? `${category} Math Mistakes` : "Math Mistake Book",
+      title: ids.length > 0 ? "Math Review Pack" : category ? `${category} Math Mistakes` : "Math Mistake Book",
       subtitle: `${student.displayName} | Generated ${generatedAt}`,
       problems: pdfItems,
     });
 
     return new Response(pdf, {
       headers: {
-        "Content-Disposition": `attachment; filename="${createMathProblemPdfFileName(category || null)}"`,
+        "Content-Disposition": `attachment; filename="${createMathProblemPdfFileName(ids.length > 0 ? "review-pack" : category || null)}"`,
         "Content-Type": "application/pdf",
       },
     });

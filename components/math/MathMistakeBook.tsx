@@ -39,6 +39,7 @@ export function MathMistakeBook() {
   const [problemText, setProblemText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [problems, setProblems] = useState<MathProblem[]>([]);
+  const [lastBatchProblems, setLastBatchProblems] = useState<MathProblem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -83,11 +84,16 @@ export function MathMistakeBook() {
 
   function addFiles(nextFiles: File[]) {
     const imageFiles = nextFiles.filter((nextFile) => ["image/jpeg", "image/png"].includes(nextFile.type));
+    const nextTotal = Math.min(files.length + imageFiles.length, 24);
 
-    setFiles((current) => [...current, ...imageFiles].slice(0, 20));
+    setFiles((current) => [...current, ...imageFiles].slice(0, 24));
 
     if (nextFiles.length !== imageFiles.length) {
       setMessage("Only JPG and PNG images were added.");
+    } else if (files.length + imageFiles.length > 24) {
+      setMessage(`Added ${nextTotal} images. A single batch can include up to 24 images.`);
+    } else if (imageFiles.length > 0) {
+      setMessage(`${imageFiles.length} image${imageFiles.length === 1 ? "" : "s"} added. Save to create a compact PDF pack.`);
     }
   }
 
@@ -96,7 +102,15 @@ export function MathMistakeBook() {
   }
 
   function handlePaste(event: React.ClipboardEvent<HTMLTextAreaElement>) {
-    const pastedFiles = Array.from(event.clipboardData.files);
+    const rawPastedFiles = [
+      ...Array.from(event.clipboardData.files),
+      ...Array.from(event.clipboardData.items)
+        .map((item) => (item.kind === "file" ? item.getAsFile() : null))
+        .filter((item): item is File => Boolean(item)),
+    ];
+    const pastedFiles = Array.from(
+      new Map(rawPastedFiles.map((file) => [`${file.name}-${file.size}-${file.lastModified}`, file])).values(),
+    );
 
     if (pastedFiles.length > 0) {
       addFiles(pastedFiles);
@@ -134,6 +148,7 @@ export function MathMistakeBook() {
 
       const savedProblems = Array.isArray(data?.problems) ? data.problems : data?.problem ? [data.problem] : [];
       setProblems((current) => [...savedProblems, ...current]);
+      setLastBatchProblems(savedProblems);
       setTitle("");
       setCategory("");
       setNotes("");
@@ -154,6 +169,10 @@ export function MathMistakeBook() {
     selectedCategory === "All"
       ? "/api/math-problems/pdf"
       : `/api/math-problems/pdf?category=${encodeURIComponent(selectedCategory)}`;
+  const lastBatchPdfUrl =
+    lastBatchProblems.length > 0
+      ? `/api/math-problems/pdf?ids=${encodeURIComponent(lastBatchProblems.map((problem) => problem.id).join(","))}`
+      : "";
 
   return (
     <div className="math-workspace">
@@ -222,7 +241,7 @@ export function MathMistakeBook() {
             className="math-intake-box"
             onChange={(event) => setProblemText(event.target.value)}
             onPaste={handlePaste}
-            placeholder="Paste one or more text questions here. You can also click inside this box and paste screenshots directly."
+            placeholder="Paste many screenshots here at once, or paste text questions separated by blank lines."
             value={problemText}
           />
 
@@ -241,6 +260,13 @@ export function MathMistakeBook() {
               <small>Select multiple JPG or PNG screenshots, or paste images into the box above.</small>
             </span>
           </button>
+
+          {previewItems.length > 0 && (
+            <div className="math-batch-count">
+              <strong>{previewItems.length}</strong>
+              <span>images ready for this batch</span>
+            </div>
+          )}
 
           {previewItems.length > 0 && (
             <div className="math-preview-grid" aria-label="Selected math images">
@@ -264,6 +290,11 @@ export function MathMistakeBook() {
             <button className="primary-button large" disabled={isSaving} onClick={saveProblems} type="button">
               {isSaving ? "Classifying and saving..." : "Save and classify"}
             </button>
+            {lastBatchPdfUrl && (
+              <a className="secondary-button" href={lastBatchPdfUrl}>
+                Download this batch PDF
+              </a>
+            )}
           </div>
 
           {message && (
@@ -288,7 +319,7 @@ export function MathMistakeBook() {
           </select>
 
           <a className={`primary-button math-pdf-link ${visibleProblems.length === 0 ? "disabled-link" : ""}`} href={pdfUrl}>
-            Download PDF
+            Download archive PDF
           </a>
           <p>{visibleProblems.length} problem{visibleProblems.length === 1 ? "" : "s"} in this PDF.</p>
         </aside>

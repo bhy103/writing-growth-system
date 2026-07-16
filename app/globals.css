@@ -1148,20 +1148,20 @@ a {
 
 .math-dropzone {
   display: grid;
-  min-height: 112px;
+  min-height: 92px;
   width: 100%;
   place-items: center;
   overflow: hidden;
-  border: 1px dashed #b9c8bd;
+  border: 1px dashed color-mix(in srgb, var(--student-color) 38%, var(--line));
   border-radius: 8px;
-  background: #f8fbf6;
+  background: #fffaf1;
   color: var(--ink);
-  padding: 18px;
+  padding: 14px;
   text-align: center;
 }
 
 .math-intake-box {
-  min-height: 180px;
+  min-height: 150px;
   resize: vertical;
 }
 
@@ -1175,7 +1175,7 @@ a {
 }
 
 .math-dropzone strong {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .math-dropzone small,
@@ -1192,19 +1192,41 @@ a {
   object-fit: contain;
 }
 
+.math-batch-count {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fffaf1;
+  color: var(--muted);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.math-batch-count strong {
+  color: var(--student-color);
+  font-size: 16px;
+}
+
 .math-preview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .math-preview-card {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfa;
-  padding: 10px;
+  background: var(--surface);
+  padding: 8px;
 }
 
 .math-preview-card img {
@@ -1228,7 +1250,7 @@ a {
 }
 
 .math-preview-card button {
-  min-height: 34px;
+  min-height: 30px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
