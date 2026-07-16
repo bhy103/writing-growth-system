@@ -106,6 +106,7 @@ async function enhanceWorksheetImage(file: File) {
 
 export function MathMistakeBook() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const recentPasteRef = useRef<{ signature: string; time: number } | null>(null);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [notes, setNotes] = useState("");
@@ -194,7 +195,16 @@ export function MathMistakeBook() {
     );
 
     if (pastedFiles.length > 0) {
+      const signature = pastedFiles.map(createFileKey).sort().join("|");
+      const now = Date.now();
+
       event.preventDefault();
+
+      if (recentPasteRef.current?.signature === signature && now - recentPasteRef.current.time < 1000) {
+        return;
+      }
+
+      recentPasteRef.current = { signature, time: now };
       void addFiles(pastedFiles);
     }
   }

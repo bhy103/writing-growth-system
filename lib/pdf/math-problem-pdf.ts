@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import fontkit from "@pdf-lib/fontkit";
-import { PDFDocument, type PDFFont, type PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, type PDFFont, type PDFPage, rgb } from "pdf-lib";
 
 type MathProblemPdfItem = {
   title: string;
@@ -213,7 +213,7 @@ function drawQuestionLines({
 export async function createMathProblemPdf(input: MathProblemPdfInput) {
   const pdf = await PDFDocument.create();
   const regularFont = await embedMathFont(pdf);
-  const boldFont = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const boldFont = regularFont;
   const muted = rgb(0.39, 0.43, 0.48);
   const ink = rgb(0.09, 0.13, 0.2);
   const green = rgb(0.12, 0.43, 0.42);

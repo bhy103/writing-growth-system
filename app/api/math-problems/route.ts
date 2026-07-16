@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { classifyMathProblem } from "@/lib/ai/math-problem-classification";
 import { apiErrorResponse } from "@/lib/api/error-response";
@@ -30,6 +31,26 @@ function splitTextProblems(input: string) {
 
 function createDefaultTitle(sequenceNumber: number) {
   return `Math Problem ${String(sequenceNumber).padStart(3, "0")}`;
+}
+
+async function uniqueFilesByContent(files: File[]) {
+  const uniqueFiles: File[] = [];
+  const seenHashes = new Set<string>();
+
+  for (const file of files) {
+    const hash = createHash("sha256")
+      .update(Buffer.from(await file.arrayBuffer()))
+      .digest("hex");
+
+    if (seenHashes.has(hash)) {
+      continue;
+    }
+
+    seenHashes.add(hash);
+    uniqueFiles.push(file);
+  }
+
+  return uniqueFiles;
 }
 
 function serializeProblem(problem: {
@@ -87,7 +108,9 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const files = formData.getAll("files").filter((value): value is File => value instanceof File && value.size > 0);
     const legacyFile = formData.get("file");
-    const allFiles = [...files, ...(legacyFile instanceof File && legacyFile.size > 0 ? [legacyFile] : [])].slice(0, 20);
+    const allFiles = await uniqueFilesByContent(
+      [...files, ...(legacyFile instanceof File && legacyFile.size > 0 ? [legacyFile] : [])].slice(0, 20),
+    );
     const textProblems = splitTextProblems(getFormText(formData, "problemText"));
 
     if (allFiles.length === 0 && textProblems.length === 0) {
