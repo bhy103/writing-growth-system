@@ -2,6 +2,7 @@ export type MathProblemClassification = {
   title: string;
   category: string;
   problemText: string;
+  answerText: string;
 };
 
 type RawMathProblemClassification = Partial<MathProblemClassification>;
@@ -9,7 +10,7 @@ type RawMathProblemClassification = Partial<MathProblemClassification>;
 const classificationSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["title", "category", "problemText"],
+  required: ["title", "category", "problemText", "answerText"],
   properties: {
     title: {
       type: "string",
@@ -21,7 +22,11 @@ const classificationSchema = {
     },
     problemText: {
       type: "string",
-      description: "The visible math question text transcribed from the image, or the pasted text. Leave empty if unreadable.",
+      description: "The visible math question text transcribed from the image, or the pasted text. Include diagrams as short text descriptions when needed. Do not include the answer or worked solution here.",
+    },
+    answerText: {
+      type: "string",
+      description: "Only the final answer, marked answer, or worked solution visible in the image/text. Leave empty if no answer is visible.",
     },
   },
 };
@@ -82,6 +87,7 @@ function normalizeClassification(raw: RawMathProblemClassification, fallbackTitl
     title: typeof raw.title === "string" && raw.title.trim() ? raw.title.trim().slice(0, 120) : fallbackTitle,
     category: typeof raw.category === "string" && raw.category.trim() ? raw.category.trim().slice(0, 80) : "General",
     problemText: typeof raw.problemText === "string" ? raw.problemText.trim() : "",
+    answerText: typeof raw.answerText === "string" ? raw.answerText.trim() : "",
   };
 }
 
@@ -90,6 +96,7 @@ function fallbackFromText(text: string, fallbackTitle: string): MathProblemClass
     title: fallbackTitle,
     category: "General",
     problemText: text.trim(),
+    answerText: "",
   };
 }
 
@@ -117,7 +124,10 @@ export async function classifyMathProblem({
         "Create a short title and classify the main tested knowledge point.",
         "Use one specific category, not a long sentence. Good examples: Fractions, Linear Equations, Area and Perimeter, Percentages, Ratios, Decimals, Place Value, Probability, Statistics, Geometry, Word Problems.",
         "If the image contains multiple questions, classify the main visible question.",
-        "Transcribe the visible problem text if possible. Do not solve the problem.",
+        "Transcribe the question text if possible. Do not solve the problem.",
+        "If the screenshot already includes an answer, correction mark, worked solution, or teacher solution, put that in answerText only.",
+        "Keep problemText as the student-facing question. Do not put the answer inside problemText.",
+        "If there is a graph, coordinate plane, shape, table, or diagram, describe it briefly in problemText so the PDF still preserves what the student needs.",
       ].join("\n"),
     },
   ];

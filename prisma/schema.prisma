@@ -162,6 +162,7 @@ model MathProblem {
   category    String
   notes       String?
   problemText String?  @db.Text
+  answerText  String?  @db.Text
   fileName    String?
   fileType    String?
   fileSize    Int?

@@ -32,6 +32,7 @@ export async function GET(request: Request) {
         category: true,
         notes: true,
         problemText: true,
+        answerText: true,
         fileName: true,
         fileType: true,
         storagePath: true,
@@ -60,6 +61,7 @@ export async function GET(request: Request) {
           imageBytes: blob ? await blob.arrayBuffer() : undefined,
           notes: problem.notes,
           problemText: problem.problemText,
+          answerText: problem.answerText,
         };
       }),
     );
