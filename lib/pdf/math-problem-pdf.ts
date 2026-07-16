@@ -28,8 +28,8 @@ const pageHeight = 841.89;
 const margin = 34;
 const contentWidth = pageWidth - margin * 2;
 const questionGap = 14;
-const compactQuestionHeight = 214;
-const largeQuestionHeight = 446;
+const compactQuestionHeight = 238;
+const largeQuestionHeight = 486;
 
 function safePdfText(value: string) {
   return value
@@ -196,9 +196,12 @@ function cleanStudentQuestionText(value: string) {
     .replace(/\\\(\s*-\s*\\sqrt\{([^}]+)\}\s*\\\)/g, "-sqrt($1)");
 
   return safePdfText(latexCleaned)
+    .replace(/^\s*\d+\s*[).:-]?\s*/, "")
     .replace(/\bThe number line is (?:shown|marked|drawn)[^.]*\./gi, "")
     .replace(/\bIt is (?:shown|marked|drawn)[^.]*\./gi, "")
     .replace(/\bPoints? (?:are|were)?\s*(?:plotted|marked|labelled|labeled)[^.]*\./gi, "")
+    .replace(/\bThe number line provided ranges from ([^.]+)\./gi, "")
+    .replace(/\bThe number line ranges from ([^.]+)\./gi, "")
     .replace(/\s+([,.;:])/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
@@ -206,7 +209,7 @@ function cleanStudentQuestionText(value: string) {
 
 function splitSubquestions(value: string) {
   const text = cleanStudentQuestionText(value);
-  const matches = Array.from(text.matchAll(/\b([a-h])\)\s*/gi));
+  const matches = Array.from(text.matchAll(/(?:^|\s|\()([a-h])\)\s*/gi));
 
   if (matches.length < 2) {
     return text ? [text] : [];
@@ -214,10 +217,14 @@ function splitSubquestions(value: string) {
 
   return matches
     .map((match, index) => {
-      const start = match.index ?? 0;
+      const rawStart = match.index ?? 0;
+      const matchedText = match[0] ?? "";
+      const letter = match[1]?.toLowerCase() ?? "";
+      const labelStart = rawStart + Math.max(0, matchedText.indexOf(letter));
       const next = matches[index + 1];
       const end = next?.index ?? text.length;
-      return text.slice(start, end).trim();
+      const body = text.slice(labelStart + letter.length + 1, end).trim();
+      return `${letter}) ${body}`.trim();
     })
     .filter(Boolean);
 }
@@ -363,7 +370,7 @@ function drawQuestionLines({
 
   for (const [blockIndex, block] of blocks.entries()) {
     const hasNumberLine = hasNumberLinePrompt(block);
-    const blockMaxLines = hasNumberLine ? 5 : Math.max(3, Math.floor(maxLines / Math.max(blocks.length, 1)));
+    const blockMaxLines = hasNumberLine ? 4 : Math.max(3, Math.floor(maxLines / Math.max(blocks.length, 1)));
 
     nextY = drawWrappedText({
       color: ink,
@@ -376,7 +383,7 @@ function drawQuestionLines({
       x,
       y: nextY,
     });
-    nextY -= 8;
+    nextY -= hasNumberLine ? 12 : 10;
 
     if (hasNumberLine) {
       drawBlankNumberLine({
@@ -385,20 +392,20 @@ function drawQuestionLines({
         page,
         width: contentWidth - 48,
         x,
-        y: nextY - 20,
+        y: nextY - 24,
       });
-      nextY -= 62;
+      nextY -= 76;
     }
 
     nextY = drawAnswerLines({
-      count: hasNumberLine ? 2 : 3,
+      count: hasNumberLine ? 3 : 4,
       line,
       page,
       width: contentWidth - 48,
       x,
       y: nextY,
     });
-    nextY -= blockIndex === blocks.length - 1 ? 0 : 12;
+    nextY -= blockIndex === blocks.length - 1 ? 0 : 20;
   }
 }
 
@@ -472,7 +479,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       font: regularFont,
       color: ink,
     });
-    textY -= 28;
+    textY -= 26;
 
     if (problem.imageBytes && !problem.answerText) {
       try {
