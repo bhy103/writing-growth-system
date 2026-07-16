@@ -60,14 +60,6 @@ export function createMathProblemPdfFileName(category?: string | null) {
   return `${sanitizePdfFileName(base) || "math-mistakes"}.pdf`;
 }
 
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en-AU", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(value);
-}
-
 function splitLines(value: string, maxLength: number) {
   const words = safePdfText(value).split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -138,7 +130,7 @@ function estimateQuestionHeight(problem: MathProblemPdfItem) {
     return largeQuestionHeight;
   }
 
-  const text = problem.problemText ?? "";
+  const text = cleanStudentQuestionText(problem.problemText ?? "");
 
   if (hasNumberLinePrompt(text) || splitSubquestions(text).length > 1) {
     return largeQuestionHeight;
@@ -162,8 +154,23 @@ function hasNumberLinePrompt(value: string) {
   return /\bnumber\s+line\b/i.test(value);
 }
 
+function cleanStudentQuestionText(value: string) {
+  return safePdfText(value)
+    .replace(/\\\(\s*\\sqrt\{([^}]+)\}\s*\\\)/g, "√$1")
+    .replace(/\\sqrt\{([^}]+)\}/g, "√$1")
+    .replace(/-\s*sqrt\{([^}]+)\}/g, "-√$1")
+    .replace(/\\\(\s*-\s*\\sqrt\{([^}]+)\}\s*\\\)/g, "-√$1")
+    .replace(/\bsqrt\(([^)]+)\)/gi, "√$1")
+    .replace(/\bThe number line is (?:shown|marked|drawn)[^.]*\./gi, "")
+    .replace(/\bIt is (?:shown|marked|drawn)[^.]*\./gi, "")
+    .replace(/\bPoints? (?:are|were)?\s*(?:plotted|marked|labelled|labeled)[^.]*\./gi, "")
+    .replace(/\s+([,.;:])/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function splitSubquestions(value: string) {
-  const text = safePdfText(value).replace(/\s+/g, " ").trim();
+  const text = cleanStudentQuestionText(value);
   const matches = Array.from(text.matchAll(/\b([a-h])\)\s*/gi));
 
   if (matches.length < 2) {
@@ -282,7 +289,6 @@ function drawBlankNumberLine({
 }
 
 function drawQuestionLines({
-  boldFont,
   height,
   ink,
   line,
@@ -293,7 +299,6 @@ function drawQuestionLines({
   x,
   y,
 }: {
-  boldFont: PDFFont;
   height: number;
   ink: ReturnType<typeof rgb>;
   line: ReturnType<typeof rgb>;
@@ -305,7 +310,7 @@ function drawQuestionLines({
   y: number;
 }) {
   const maxLines = height === largeQuestionHeight ? 18 : 8;
-  const text = safePdfText(problem.problemText?.trim() ?? "");
+  const text = cleanStudentQuestionText(problem.problemText?.trim() ?? "");
 
   if (!text) {
     page.drawText("Question text was not extracted. Use the source image above for review.", {
@@ -359,16 +364,6 @@ function drawQuestionLines({
       y: nextY,
     });
     nextY -= blockIndex === blocks.length - 1 ? 0 : 12;
-  }
-
-  if (problem.answerText) {
-    page.drawText("Answer key at the end.", {
-      x,
-      y: Math.max(nextY - 4, y - height + 54),
-      size: 8,
-      font: boldFont,
-      color: muted,
-    });
   }
 }
 
@@ -442,23 +437,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       font: regularFont,
       color: ink,
     });
-    textY -= 15;
-
-    page.drawText(safePdfText(problem.category), {
-      x: innerX,
-      y: textY,
-      size: 8,
-      font: regularFont,
-      color: green,
-    });
-    page.drawText(formatDate(problem.createdAt), {
-      x: margin + contentWidth - 74,
-      y: textY,
-      size: 8,
-      font: regularFont,
-      color: muted,
-    });
-    textY -= 18;
+    textY -= 28;
 
     if (problem.imageBytes && !problem.answerText) {
       try {
@@ -507,7 +486,6 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       }
     } else {
       drawQuestionLines({
-        boldFont,
         height: questionHeight,
         ink,
         line,
@@ -519,34 +497,6 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
         y: textY,
       });
     }
-
-    if (problem.notes) {
-      drawWrappedText({
-        color: muted,
-        font: regularFont,
-        maxLines: 2,
-        page,
-        size: 8,
-        text: `Note: ${problem.notes}`,
-        widthChars: 84,
-        x: innerX,
-        y: y + 36,
-      });
-    }
-
-    page.drawLine({
-      start: { x: innerX, y: y + 28 },
-      end: { x: margin + contentWidth - 12, y: y + 28 },
-      color: line,
-      thickness: 0.7,
-    });
-    page.drawText("Review:", {
-      x: innerX,
-      y: y + 14,
-      size: 8,
-      font: boldFont,
-      color: muted,
-    });
 
     yCursor = y - questionGap;
   }
