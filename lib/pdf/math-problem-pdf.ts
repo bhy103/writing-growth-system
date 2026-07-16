@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, type PDFFont, type PDFPage, StandardFonts, rgb } from "pdf-lib";
 
 type MathProblemPdfItem = {
@@ -26,44 +29,15 @@ const questionGap = 14;
 const compactQuestionHeight = 214;
 const largeQuestionHeight = 446;
 
-const unicodePdfReplacements: Record<string, string> = {
-  "\u2212": "-",
-  "\u2013": "-",
-  "\u2014": "-",
-  "\u00d7": "x",
-  "\u00f7": "/",
-  "\u221a": "sqrt",
-  "\u2264": "<=",
-  "\u2265": ">=",
-  "\u2260": "!=",
-  "\u2248": "~=",
-  "\u00b0": " degrees",
-  "\u00b2": "^2",
-  "\u00b3": "^3",
-  "\u2070": "^0",
-  "\u00b9": "^1",
-  "\u2074": "^4",
-  "\u2075": "^5",
-  "\u2076": "^6",
-  "\u2077": "^7",
-  "\u2078": "^8",
-  "\u2079": "^9",
-  "\u2080": "_0",
-  "\u2081": "_1",
-  "\u2082": "_2",
-  "\u2083": "_3",
-  "\u2084": "_4",
-  "\u2085": "_5",
-  "\u2086": "_6",
-  "\u2087": "_7",
-  "\u2088": "_8",
-  "\u2089": "_9",
-};
-
 function safePdfText(value: string) {
-  return value
-    .replace(/[−–—×÷√≤≥≠≈°²³⁰¹⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]/g, (character) => unicodePdfReplacements[character] ?? character)
-    .replace(/[^\x09\x0a\x0d\x20-\x7e]/g, "");
+  return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "");
+}
+
+async function embedMathFont(pdf: PDFDocument) {
+  pdf.registerFontkit(fontkit);
+  const fontPath = join(process.cwd(), "public", "fonts", "NotoSansMath-Regular.woff");
+  const fontBytes = await readFile(fontPath);
+  return pdf.embedFont(fontBytes);
 }
 
 function sanitizePdfFileName(value: string) {
@@ -238,7 +212,7 @@ function drawQuestionLines({
 
 export async function createMathProblemPdf(input: MathProblemPdfInput) {
   const pdf = await PDFDocument.create();
-  const regularFont = await pdf.embedFont(StandardFonts.Helvetica);
+  const regularFont = await embedMathFont(pdf);
   const boldFont = await pdf.embedFont(StandardFonts.HelveticaBold);
   const muted = rgb(0.39, 0.43, 0.48);
   const ink = rgb(0.09, 0.13, 0.2);
@@ -303,7 +277,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       x: innerX,
       y: textY,
       size: 11,
-      font: boldFont,
+      font: regularFont,
       color: ink,
     });
     textY -= 15;
@@ -312,7 +286,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
       x: innerX,
       y: textY,
       size: 8,
-      font: boldFont,
+      font: regularFont,
       color: green,
     });
     page.drawText(formatDate(problem.createdAt), {
@@ -451,7 +425,7 @@ export async function createMathProblemPdf(input: MathProblemPdfInput) {
         x: margin,
         y: yCursor,
         size: 11,
-        font: boldFont,
+        font: regularFont,
         color: ink,
       });
       yCursor -= 15;
